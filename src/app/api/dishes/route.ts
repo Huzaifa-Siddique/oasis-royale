@@ -10,6 +10,7 @@ export async function GET() {
       is_available: true,
       model_url: '/models/pizza.glb',
       poster_url: '/models/pizza-placeholder.webp',
+      ios_src: '/models/pizza.usdz',
     },
   ];
 

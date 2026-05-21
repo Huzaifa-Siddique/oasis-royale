@@ -7,6 +7,7 @@ export type Dish = {
   image_url: string;
   model_url?: string;
   poster_url?: string;
+  ios_src?: string;
   is_available: boolean;
   metadata: Record<string, unknown>;
   created_at: string;

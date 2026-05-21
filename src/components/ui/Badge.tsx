@@ -1,16 +1,12 @@
 import { cn } from "@/lib/utils";
 
 type BadgeProps = {
-  variant?: "default" | "info" | "success" | "warning";
+  variant?: "default" | "info" | "success" | "warning" | "gold";
   className?: string;
   children: React.ReactNode;
 };
 
-export default function Badge({
-  variant = "default",
-  className,
-  children,
-}: BadgeProps) {
+export function Badge({ variant = "default", className, children }: BadgeProps) {
   return (
     <span
       className={cn(
@@ -26,3 +22,5 @@ export default function Badge({
     </span>
   );
 }
+
+export default Badge;

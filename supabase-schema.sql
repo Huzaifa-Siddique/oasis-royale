@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS dishes (
   category text NOT NULL,
   image_url text,
   model_url text,
+  poster_url text,
+  ios_src text,
   is_available boolean DEFAULT true,
   metadata jsonb DEFAULT '{}',
   created_at timestamptz DEFAULT now()

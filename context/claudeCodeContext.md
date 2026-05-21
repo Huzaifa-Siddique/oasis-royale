@@ -19,3 +19,13 @@ CHANGES:
 - src/lib/network.ts (created network utility with isOnline, onNetworkChange, and getConnectionQuality functions)
 TOKENS_USED: n/a
 ---
+2026-05-21 | Claude Code | context/claudeCodeContext.md
+TASK: Add `ios_src` Quick Look support
+STATUS: DONE
+CHANGES:
+- supabase-schema.sql (added `ios_src` column to `dishes` table)
+- src/lib/supabase-types.ts (added optional `ios_src?: string` to `Dish` type)
+- src/app/api/dishes/route.ts (API seed/example now includes `ios_src: '/models/pizza.usdz'`)
+- public/models/README-usdz.md (instructions for adding a `.usdz` asset)
+TOKENS_USED: n/a
+---

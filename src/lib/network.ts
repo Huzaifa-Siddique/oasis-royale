@@ -1,25 +1,29 @@
 // Usage example:
-// const unsubscribe = onNetworkChange((online) => console.log('Network state:', online ? 'Online' : 'Offline'));
+// const isSlow = isSlowNetwork();
+// console.log('Is slow network:', isSlow);
+//
+// const shouldPreferPoster = preferPoster();
+// console.log('Should prefer poster:', shouldPreferPoster);
 
-export const isOnline = (): boolean =>
-  typeof navigator !== 'undefined' ? navigator.onLine : true;
+interface NetworkInformation {
+  effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
+  saveData?: boolean;
+}
 
-export const onNetworkChange = (cb: (online: boolean) => void) => {
-  if (typeof window === 'undefined') return () => {};
+declare global {
+  interface Navigator {
+    connection?: NetworkInformation;
+  }
+}
 
-  const handleOnline = () => cb(true);
-  const handleOffline = () => cb(false);
+export function isSlowNetwork(): boolean {
+  if (typeof navigator === 'undefined' || !navigator.connection) {
+    return false; // Assume fast network for SSR or if connection info is not available
+  }
+  const connection = navigator.connection;
+  return connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g' || connection.saveData === true;
+}
 
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
-
-  return () => {
-    window.removeEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
-  };
-};
-
-export const getConnectionQuality = (): '4g' | '3g' | '2g' | 'slow' => {
-  if (typeof navigator === 'undefined') return '4g';
-  return (navigator as any)?.connection?.effectiveType || '4g';
-};
+export function preferPoster(): boolean {
+  return isSlowNetwork();
+}

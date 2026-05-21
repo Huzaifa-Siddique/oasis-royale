@@ -17,3 +17,10 @@ STATUS: DONE
 CHANGES: src/lib/supabase-types.ts (added poster_url), src/app/page.tsx (fetch /api/dishes, single product card, AR modal), src/components/ar/ModelViewer.tsx (CDN script loader, poster fallback on error)
 TOKENS_USED: n/a
 ---
+2026-05-21 | OpenCode | context/openCodeContext.md
+TASK: AR demo + model-viewer singleton + pizza prototype
+STATUS: DONE
+CHANGES: src/components/ar/ModelViewer.tsx (singleton pattern with mountModelViewer/unmountModelViewer/useModelViewer, single WebGL context), src/app/pizza/page.tsx (pizza demo page with View in AR modal, network-aware poster fallback), src/lib/network.ts (preferPoster already present), src/components/ui/index.ts (added Textarea export)
+TEST: npm run dev → http://localhost:3000/pizza → click View in AR → modal mounts singleton model-viewer with src=/models/pizza.glb. On slow networks (2g/saveData), shows poster-only with "Download 3D (large)" opt-in button.
+TOKENS_USED: n/a
+---

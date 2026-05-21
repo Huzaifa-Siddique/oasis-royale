@@ -3,17 +3,25 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
+type Variant = "primary" | "secondary" | "ghost" | "outline";
+type Size = "sm" | "md" | "lg";
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "outline";
-  size?: "sm" | "md" | "lg";
+  variant?: Variant;
+  size?: Size;
   loading?: boolean;
+  asChild?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", loading, disabled, children, ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", loading, disabled, children, asChild = false, ...props }, ref) => {
+    const Comp: any = asChild ? "span" : "button";
+
     return (
-      <button
+      <Comp
         ref={ref}
+        role={asChild ? undefined : "button"}
+        tabIndex={asChild ? undefined : 0}
         disabled={disabled || loading}
         className={cn(
           "inline-flex items-center justify-center font-heading tracking-widest uppercase transition-all duration-300",
@@ -45,7 +53,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
-      </button>
+      </Comp>
     );
   },
 );

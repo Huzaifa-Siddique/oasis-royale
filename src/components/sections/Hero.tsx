@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 
-declare global {
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       "model-viewer": React.DetailedHTMLProps<
@@ -23,6 +23,9 @@ declare global {
         poster?: string;
         "poster-color"?: string;
         reveal?: string;
+        ar?: boolean | string;
+        "ar-modes"?: string;
+        "ios-src"?: string;
       };
     }
   }
