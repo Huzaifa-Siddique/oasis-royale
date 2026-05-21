@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #f7f7f7;
+  --color-gold: #d4af37;
+  --color-teal: #114b5f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-gold: var(--color-gold);
+  --color-teal: var(--color-teal);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-lexend-tera);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.2);
+  color: #f7f7f7;
+}
+
+@utility glassmorphism {
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@layer utilities {
+  .animate-pulse-gold {
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+}

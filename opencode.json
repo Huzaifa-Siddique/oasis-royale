@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "provider": {
+    "ccr-gemini": {
+      "name": "CCR Gemini",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "baseURL": "http://localhost:3456/v1",
+        "apiKey": "sk-ant-dummy-key"
+      },
+      "models": {
+        "gemini-2.5-flash": {
+          "name": "Gemini 2.5 Flash"
+        }
+      }
+    }
+  },
+  "model": "ccr-gemini/gemini-2.5-flash"
+}
