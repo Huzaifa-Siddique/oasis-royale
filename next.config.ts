@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   experimental: {
     preloadEntriesOnStart: false,
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/pizza",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
