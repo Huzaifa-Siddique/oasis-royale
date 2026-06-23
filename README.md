@@ -1,5 +1,3 @@
-![Oasis Royale Banner](public/oasis_royale_banner.jpg)
-
 # Oasis Royale
 
 An interactive 3D WebAR menu and real-time ordering platform for mobile-first dining.
@@ -11,12 +9,30 @@ Customers scan a QR code at their table, preview food in 3D or place it directly
 
 ---
 
+## 📸 Screenshots
+
+To display screenshots of the application on GitHub, take screenshots of your pages in mobile view and save them inside the `public/screenshots/` folder matching these filenames:
+
+| 📱 Customer Homepage | 🍔 Interactive 3D & AR Menu | ⏳ Real-Time Tracker |
+| :---: | :---: | :---: |
+| ![Homepage Preview](public/screenshots/homepage.png) | ![Menu Preview](public/screenshots/menu.png) | ![Tracker Preview](public/screenshots/tracker.png) |
+
+| 👨‍🍳 Kitchen Queue Dashboard | 💰 Counter Checkout Panel | 📊 Admin Analytics Panel |
+| :---: | :---: | :---: |
+| ![Kitchen Preview](public/screenshots/kitchen.png) | ![Counter Preview](public/screenshots/counter.png) | ![Admin Preview](public/screenshots/admin.png) |
+
+---
+
 ## What it does
 
-*   **3D Menu & AR Placement**: Guests can interact with 3D models of dishes directly in their mobile browser. Using WebAR, they can place the food onto their table to see actual sizes and plating.
+*   **3D Orbit Viewer**: Guests can touch-drag to orbit the 3D models, pinch to zoom, and inspect dish details and textures from any angle in real-time.
+*   **"View in your space" WebAR**: A button that projects the 3D models onto physical tables using Google Scene Viewer (Android) or Quick Look (iOS) with actual real-world dimensions to preview plating and sizes before ordering.
 *   **Live Order Sync**: No page refreshes. The order tracking screen (`/order/track`) receives instant status updates (Pending, Processing, Ready) from the kitchen via Supabase realtime WebSockets.
-*   **Staff Portals**: Includes a Counter view (`/counter`) for approving checkout and managing payments, a Kitchen screen (`/kitchen`) to manage the cooking queue, and a Dispatch panel (`/dispatch`) for order pickup.
-*   **Procedural Alerts**: Audio chimes are synthesized on the fly using the Web Audio API to alert kitchen staff of new orders and notify customers of status changes without loading audio files.
+*   **Admin Analytics Dashboard (`/admin/dashboard`)**: A private portal for owners showing real-time sales statistics, table activity heatmaps, checkout source distribution (QR vs Counter), QR code generation for physical tables, and order cancellation wastage tracking.
+*   **Counter Panel (`/counter`)**: Used by counter staff to approve cart checkout, set preparation ETAs, process payments, and track order metrics.
+*   **Kitchen Panel (`/kitchen`)**: A real-time cooking display board for chefs, featuring visual timers and order state transition actions.
+*   **Dispatch Board (`/dispatch`)**: A dedicated pickup screen for served orders.
+*   **Procedural Alerts**: Dynamic audio chimes are synthesized on the fly using the Web Audio API to alert kitchen staff of new orders and notify customers of status changes without loading audio files.
 
 ---
 
