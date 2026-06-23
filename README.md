@@ -36,6 +36,19 @@ To display screenshots of the application on GitHub, take screenshots of your pa
 
 ---
 
+## Target Device Matrix
+
+To mirror real-world restaurant hardware deployments, each user interface was designed with specific operational viewports in mind:
+
+| Interface / Dashboard | Route | Intended Device | Mobile (375px+) | Tablet (768px+) | Desktop (1024px+) | UX Rationale |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| **Customer Ordering (WebAR)** | `/` | Mobile First | **Optimal** | Compatible | Compatible | Customers order from tables using phones / scanning QR codes. |
+| **Admin Analytics** | `/admin/dashboard` | Hybrid | **Responsive** | Optimal | Optimal | Managers check stats on the go (Mobile) or deep-dive at their desks. |
+| **Kitchen Dashboard** | `/kitchen` | KDS / Tablet | *Simplified* | **Optimal** | **Optimal** | Kitchen staff requires large screen tickets for hands-free reading. |
+| **Counter & Dispatch** | `/counter`, `/dispatch` | POS / Tablet | *Simplified* | **Optimal** | **Optimal** | POS terminals require high information density for rapid checkouts. |
+
+---
+
 ## Engineering Details & Challenges
 
 ### 1. Canvas Reparenting (WebGL Memory Optimization)
@@ -135,3 +148,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the app locally.
 
 ## License
 Licensed under the [MIT License](LICENSE).
+
+
+
+
+
+
+
+
+
+
+
