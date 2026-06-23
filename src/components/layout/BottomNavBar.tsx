@@ -37,7 +37,7 @@ export default function BottomNavBar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-250",
+                "flex flex-col items-center gap-0.5 px-2 xs:px-3 py-1 rounded-xl transition-all duration-250",
                 "active:scale-90",
                 active
                   ? "text-gold font-semibold scale-105 filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]"
@@ -45,10 +45,12 @@ export default function BottomNavBar() {
               )}
             >
               <div className="relative flex items-center justify-center">
-                <item.icon className={cn("w-5 h-5 transition-transform", active && "stroke-[2.5px]")} />
+                <item.icon className={cn("w-4.5 h-4.5 xs:w-5 xs:h-5 transition-transform", active && "stroke-[2.5px]")} />
                 {item.href === "/order" && <CartBadge />}
               </div>
-              <span className="text-[10px] font-heading tracking-widest uppercase scale-[0.85]">{item.label}</span>
+              <span className="text-[8px] xs:text-[9px] sm:text-[10px] font-heading tracking-wider uppercase scale-[0.9] sm:scale-100 sm:tracking-widest">
+                {item.label}
+              </span>
             </Link>
           );
         })}

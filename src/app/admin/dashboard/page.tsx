@@ -182,17 +182,19 @@ function AdminDashboardContent() {
   return (
     <div className="pt-32 pb-16">
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-white/5 pb-6">
           <SectionHeader
             tag="Administration"
             title="Orders Dashboard"
             subtitle="Real-time overview of all orders — QR and counter."
+            align="left"
+            className="!mb-0"
           />
           <a
             href={`/api/orders/export?date_from=${dateFrom}&date_to=${dateTo}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all text-sm font-medium w-fit sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gold text-background hover:bg-gold/90 transition-all text-sm font-semibold w-full sm:w-auto shadow-lg shadow-gold/10"
           >
             <Download className="w-4 h-4" />
             Export CSV
