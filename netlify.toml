@@ -1,0 +1,33 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  directory = "netlify/functions"
+
+[build.environment]
+  NEXT_PUBLIC_SUPABASE_URL = "https://ypsplpqawhxqhowzzulw.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_wxTzEjX3LCse2q-K_ta00w_NAyStvLq"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[headers]]
+  for = "/models/*.glb"
+  [headers.values]
+    Content-Type = "model/gltf-binary"
+
+[[headers]]
+  for = "/models/*.usdz"
+  [headers.values]
+    Content-Type = "model/vnd.usdz+zip"
+    Cache-Control = "no-cache"
+
+# Proxy Supabase API through same origin (bypass Safari ITP / CORS)
+[[redirects]]
+  from = "/api/supabase/*"
+  to = "https://ypsplpqawhxqhowzzulw.supabase.co/:splat"
+  status = 200
+  force = false
+
+
