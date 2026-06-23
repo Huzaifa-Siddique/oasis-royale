@@ -1,56 +1,46 @@
+![Oasis Royale Banner](public/oasis_royale_banner.jpg)
+
 # 🍕 Oasis Royale — 3D Interactive WebAR Dining
 
 > **A premium, mobile-first WebAR restaurant platform that lets customers project dishes directly onto their table in 3D, and tracks orders in real-time using Supabase WebSockets.**
 
-🚀 **Live Production Site**: [oasisroyale.vercel.app](https://oasisroyale.vercel.app/)
+* **Live Web App**: [oasisroyale.vercel.app](https://oasisroyale.vercel.app/)
+* **Technologies**: Next.js 15, Supabase Database & Realtime, WebGL (Three.js + Google Model Viewer), Web Audio API, TailwindCSS 4, Vercel
+
+---
+
+## 📸 User Interface Showcase
+
+| 📱 3D Interactive Menu | ⏳ Real-Time Order Tracker | 👨‍🍳 Kitchen Control Dashboard |
+| :---: | :---: | :---: |
+| ![Menu Page](public/menu-preview.png) | ![Tracker Page](public/tracker-preview.png) | ![Kitchen Dashboard](public/kitchen-preview.png) |
+
+*(Note: To show the UI previews, save your screenshots inside the `public/` directory as `menu-preview.png`, `tracker-preview.png`, and `kitchen-preview.png` respectively).*
 
 ---
 
 ## ⚡ 30-Second Quick Start (Demo the Real-Time Loop)
 
-To see the real-time order state engine and Web Audio system in action:
+To see the real-time order state engine and Web Audio notification system in action:
 
 1. **Open Side-by-Side Windows**:
    * **Window A (Customer Menu)**: Open the menu page: [`https://oasisroyale.vercel.app/menu`](https://oasisroyale.vercel.app/menu).
    * **Window B (Kitchen Panel)**: Open the kitchen dashboard: [`https://oasisroyale.vercel.app/kitchen`](https://oasisroyale.vercel.app/kitchen).
 2. **Place an Order (Window A)**:
-   * Tap a menu card to load the 3D model container.
-   * Add a dish to your cart, click checkout, fill in your details, and place the order.
+   * Tap a menu card to load the 3D model. Add it to the cart and checkout.
    * You'll be redirected to the real-time tracking page (`/order/track`).
 3. **Accept the Order (Window B)**:
-   * Look at the Kitchen dashboard. You'll hear a synthesized chime and see the new order pop up.
-   * Click **Accept Order** to assign an estimated time (ETA).
+   * You will instantly hear a chime and see the order pop up. Click **Accept Order** to set an ETA.
 4. **Watch Real-Time Status Updates (Window A)**:
    * Witness the tracking timeline transition from *Pending* to *Processing* instantly without page refresh, accompanied by status notification beeps!
-
----
-
-## 💎 Key Features
-
-*   **Zero-Crash 3D Singleton Canvas**: Mobile browsers crash if you load multiple WebGL elements. Oasis Royale uses exactly **one (1)** persistent `<model-viewer>` instance in global memory. When a customer interacts with a card, the instance is dynamically reparented. An `IntersectionObserver` handles automatic memory cleanup.
-*   **Native WebAR Preview**: Tap **"View in AR"** on iOS to launch **AR Quick Look** (pre-built `.usdz` assets), or on Android to launch **Google Scene Viewer** (`.glb` assets optimized using Draco compression to <1.2MB).
-*   **Real-time Order Stepper**: Fully powered by **Supabase Postgres Change WebSockets**—order status updates sync instantly between the kitchen panel and the user tracker.
-*   **Synthesized Web Audio System**: Uses the Web Audio API to synthesize custom chimes and notification tones dynamically, bypassing mobile browser media autoplay restrictions.
-
----
-
-## 🔐 Staff & Admin Access
-
-Authentication is powered by **Supabase Auth**. Since this is a public repository, credentials are kept secure and are not hardcoded. 
-
-To test the kitchen dashboard (`/kitchen`) or the admin panel (`/admin`):
-1. **Sign Up**: Go to the Profile page [`/profile`](https://oasisroyale.vercel.app/profile) and register a new account.
-2. **Assign Staff Role**: In your Supabase SQL editor or table editor, update the user's role to `staff` or `admin` in the `profiles` table:
-   ```sql
-   UPDATE profiles SET role = 'staff' WHERE email = 'your-email@example.com';
-   ```
-   *(Note: For the Hack Club Macondo submission judges, the demo credentials can be shared privately in the submission portal description rather than exposing them in the public git repository).*
 
 ---
 
 ## 🏗️ Technical Architecture
 
 ### 1. Zero-Crash 3D Singleton Canvas Reparenting
+Mobile WebGL engines enforce strict memory budgets (often crashing when loading multiple `<model-viewer>` or Three.js instances). Oasis Royale solves this by keeping **exactly one (1)** persistent renderer context in global memory, reparenting it dynamically to target cards as the user interacts. An `IntersectionObserver` handles automatic detachment and cleanup.
+
 ```mermaid
 graph TD
     A[User Scrolls Menu] --> B{Interaction Tapped?}
@@ -65,6 +55,8 @@ graph TD
 ```
 
 ### 2. Supabase Real-Time Order Stepper
+Instead of polling, the client opens a Postgres change WebSocket subscription filtering specifically by the current session ID to track the status path.
+
 ```mermaid
 sequenceDiagram
     participant Customer as Customer Browser (/order/track)
@@ -81,51 +73,21 @@ sequenceDiagram
 
 ---
 
-## 🗺️ Project Core Routes
+## 📦 Core Dependencies & Components
 
-| Route | Role | Purpose |
-| :--- | :--- | :--- |
-| `/` | Landing / Entrance | Minimal luxury landing page with smooth motion animations. |
-| `/menu` | Customer Menu | High-performance menu with interactive 3D WebAR models. |
-| `/order` | Cart & Checkout | Order confirmation, customer details, and database submission. |
-| `/order/track` | Live Tracker | Real-time WebSocket timeline indicating current status. |
-| `/kitchen` | Kitchen Screen | Back-of-house panel to accept/manage orders and trigger status changes. |
-| `/dispatch` | Delivery Screen | Delivery control panel to dispatch and complete orders. |
-| `/admin` | Store Admin | Management hub for metrics, product visibility, and system health. |
+| Dependency | Purpose |
+| :--- | :--- |
+| **Next.js 15** | Framework for routing, server API handlers, and deployment. |
+| **Supabase SDK** | Handles user authentication and PostgreSQL WebSocket replication. |
+| **Three.js & Google Model Viewer** | Custom WebGL container rendering interactive 3D structures. |
+| **Framer Motion & GSAP** | High-performance, hardware-accelerated animations. |
+| **Web Audio API** | Synthesizes status alerts dynamically without relying on static files. |
 
 ---
 
-## 📂 Project Organization
+## 🚀 Local Setup & Installation
 
-```
-Oasis Royale/
-├── src/
-│   ├── app/                # Next.js App Router (Pages, API Route Handlers)
-│   │   ├── admin/          # Admin Dashboard
-│   │   ├── dispatch/       # Dispatch Panel
-│   │   ├── kitchen/        # Kitchen order monitoring UI
-│   │   ├── menu/           # High-Performance interactive 3D Menu
-│   │   ├── order/          # Checkout page & `/order/track` realtime client
-│   │   └── api/            # Supabase API handlers for dishes and orders
-│   ├── components/         # Premium design components (Glassmorphism containers, buttons)
-│   ├── hooks/              # Custom React Hooks (WebGL Reparenting, Audio Synthesis)
-│   └── lib/                # Shared modules (Supabase, utilities, types)
-├── public/                 # Static files
-│   └── models/             # Optimized 3D model pipelines (.glb & .usdz format)
-├── docs/                   # Internal specifications and specs
-│   └── development/        # Session memories & developmental logs
-├── migrations/             # Supabase Schema Migration scripts
-├── scripts/                # Asset pipelines (scripts to compress and convert GLB models)
-├── supabase-schema.sql     # Database seeding SQL file
-├── package.json            # Dependencies & Scripts definition
-└── netlify.toml            # Netlify configuration (Legacy)
-```
-
----
-
-## 🚀 Local Installation & Configuration
-
-Follow these 4 steps to get the environment working locally:
+Get the project running on your local machine in 3 simple steps:
 
 ### 1. Clone the repository
 ```bash
@@ -140,10 +102,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-public-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
+*(Note: If no environment variables are defined, the app automatically falls back to a sandbox database configured in `src/lib/supabase.ts` for out-of-the-box testing).*
 
-### 3. Initialize the Supabase Database
-1. Go to your **Supabase Project Dashboard** and open the **SQL Editor**.
-2. Copy the contents of [`supabase-schema.sql`](file:///D:/HUZAIFA/Oasis%20Royale/agents-netlify-supabase-env-fix/supabase-schema.sql) and run the script. This will set up all required tables, Row-Level Security, and replication for real-time WebSockets.
+### 3. Initialize the Supabase Database (Optional)
+If setting up your own Supabase instance:
+1. Go to your **Supabase Dashboard SQL Editor**.
+2. Run the script inside [`supabase-schema.sql`](supabase-schema.sql) to create the tables (`dishes`, `orders`, `profiles`, `staff`), establish RLS policies, and enable real-time replication.
 
 ### 4. Install Dependencies & Launch
 ```bash
@@ -154,30 +118,11 @@ Open [http://localhost:3000](http://localhost:3000) to view the application loca
 
 ---
 
-## 📦 Build-Time Compression & USDZ Pipeline
+## 📦 Build-Time 3D Compression
 
-The repository includes build-time tools inside `package.json` to optimize complex 3D assets to keep the bundle footprint below 1.2MB per dish:
-
-* **Draco GLB Compression**:
-  ```bash
-  npm run compress
-  ```
-  Compresses textures and reduces polycount without loss of visual details.
-* **Apple Quick Look USDZ Export**:
-  ```bash
-  npm run convert-usdz
-  ```
-  Generates Apple-compliant USDZ models with fully unlit textures optimized for iOS AR Quick Look lighting.
-
----
-
-## 🛠️ Technologies Used
-
-[![Framework](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Database](https://img.shields.io/badge/Supabase-Database%20%26%20Realtime-emerald?style=flat-square&logo=supabase)](https://supabase.com/)
-[![Styling](https://img.shields.io/badge/Tailwind-CSS%204.0-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Hosting](https://img.shields.io/badge/Vercel-Production%20Ready-black?style=flat-square&logo=vercel)](https://vercel.com/)
-[![ThreeJS](https://img.shields.io/badge/Three.js-WebGL%20Rendering-orange?style=flat-square&logo=three.js)](https://threejs.org/)
+Optimize 3D models to keep sizes below 1.2MB:
+* **Draco GLB Compression**: `npm run compress`
+* **Apple Quick Look USDZ Export**: `npm run convert-usdz`
 
 ---
 
