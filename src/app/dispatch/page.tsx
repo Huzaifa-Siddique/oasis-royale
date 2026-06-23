@@ -255,21 +255,24 @@ function DispatchContent() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <span className="font-heading text-base text-gold">{formatPrice(order.total)}</span>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5">
+                    <div>
+                      <span className="text-[10px] text-foreground/40 uppercase tracking-wider block sm:inline mr-1">Total:</span>
+                      <span className="font-heading text-base text-gold">{formatPrice(order.total)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       {order.customer_phone && (sentTs ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-green-400">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-green-400 mr-2">
                           <CheckCircle className="w-3.5 h-3.5" />
                           Sent {new Date(sentTs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       ) : (
-                        <Button variant="secondary" size="md" onClick={() => handleSend(order)} disabled={!waUrl}>
+                        <Button variant="secondary" size="md" onClick={() => handleSend(order)} disabled={!waUrl} className="cursor-pointer">
                           <Send className="w-3.5 h-3.5" />
                           Send
                         </Button>
                       ))}
-                      <Button variant="primary" size="md" onClick={() => handlePickup(order)}>
+                      <Button variant="primary" size="md" onClick={() => handlePickup(order)} className="cursor-pointer">
                         <Package className="w-3.5 h-3.5" />
                         Picked Up
                       </Button>

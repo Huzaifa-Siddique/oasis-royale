@@ -182,7 +182,7 @@ function AdminDashboardContent() {
   return (
     <div className="pt-32 pb-16">
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 space-y-8">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <SectionHeader
             tag="Administration"
             title="Orders Dashboard"
@@ -192,7 +192,7 @@ function AdminDashboardContent() {
             href={`/api/orders/export?date_from=${dateFrom}&date_to=${dateTo}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all text-sm font-medium shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all text-sm font-medium w-fit sm:w-auto"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -225,247 +225,355 @@ function AdminDashboardContent() {
         {activeTab === "overview" ? (
           <div className="space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6">
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <TrendingUp className="w-5 h-5 text-gold" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <TrendingUp className="w-5 h-5 text-gold" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Total Orders</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Smartphone className="w-5 h-5 text-gold" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.qr}</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">QR Orders</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Monitor className="w-5 h-5 text-teal-200" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.counter}</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Counter Orders</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Users className="w-5 h-5 text-gold" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1 truncate">
+                  {formatPrice(stats.revenue)}
+                </p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Total Revenue</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Clock className="w-5 h-5 text-yellow-400" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.pending}</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Awaiting Kitchen</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Clock className="w-5 h-5 text-teal-200" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.avgProcessingTime}m</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Avg. Process Time</p>
+              </GlassCard>
+              <GlassCard className="!p-4 sm:!p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <p className="text-xl sm:text-2xl font-heading mb-1">{stats.cancellationRate}%</p>
+                <p className="text-[10px] sm:text-xs text-foreground/50">Cancel Rate</p>
+              </GlassCard>
             </div>
-            <p className="text-2xl font-heading mb-1">{stats.total}</p>
-            <p className="text-xs text-foreground/50">Total Orders</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Smartphone className="w-5 h-5 text-gold" />
-            </div>
-            <p className="text-2xl font-heading mb-1">{stats.qr}</p>
-            <p className="text-xs text-foreground/50">QR Orders</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Monitor className="w-5 h-5 text-teal-200" />
-            </div>
-            <p className="text-2xl font-heading mb-1">{stats.counter}</p>
-            <p className="text-xs text-foreground/50">Counter Orders</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Users className="w-5 h-5 text-gold" />
-            </div>
-            <p className="text-2xl font-heading mb-1">
-              {formatPrice(stats.revenue)}
-            </p>
-            <p className="text-xs text-foreground/50">Total Revenue</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Clock className="w-5 h-5 text-yellow-400" />
-            </div>
-            <p className="text-2xl font-heading mb-1">{stats.pending}</p>
-            <p className="text-xs text-foreground/50">Awaiting Kitchen</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Clock className="w-5 h-5 text-teal-200" />
-            </div>
-            <p className="text-2xl font-heading mb-1">{stats.avgProcessingTime}m</p>
-            <p className="text-xs text-foreground/50">Avg. Processing Time</p>
-          </GlassCard>
-          <GlassCard className="!p-5">
-            <div className="flex items-center justify-between mb-3">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-            </div>
-            <p className="text-2xl font-heading mb-1">{stats.cancellationRate}%</p>
-            <p className="text-xs text-foreground/50">Cancellation Rate</p>
-          </GlassCard>
-        </div>
 
         {/* Date Range & Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-foreground/40 uppercase tracking-wider font-heading">From:</span>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground focus:border-gold/30 focus:outline-none"
-            />
-            <span className="text-xs text-foreground/40 uppercase tracking-wider font-heading">To:</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground focus:border-gold/30 focus:outline-none"
-            />
-            <button
-              onClick={() => {
-                const r = getTodayRange();
-                setDateFrom(toDateInputValue(r.from));
-                setDateTo(toDateInputValue(r.to));
-              }}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all"
-            >
-              Today
-            </button>
+        <div className="flex flex-col gap-4 p-4 rounded-xl bg-white/5 border border-white/10 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading">From:</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground focus:border-gold/30 focus:outline-none"
+              />
+              <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading">To:</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground focus:border-gold/30 focus:outline-none"
+              />
+              <button
+                onClick={() => {
+                  const r = getTodayRange();
+                  setDateFrom(toDateInputValue(r.from));
+                  setDateTo(toDateInputValue(r.to));
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all cursor-pointer"
+              >
+                Today
+              </button>
+            </div>
           </div>
 
-          <span className="text-xs text-foreground/40 uppercase tracking-wider font-heading">
-            Source:
-          </span>
-          {(["all", "qr", "counter"] as SourceFilter[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setSourceFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                sourceFilter === s
-                  ? "bg-gold/20 text-gold border border-gold/30"
-                  : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
-              }`}
-            >
-              {s === "all" ? "All" : s === "qr" ? "QR" : "Counter"}
-            </button>
-          ))}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading mr-1">
+                Source:
+              </span>
+              {(["all", "qr", "counter"] as SourceFilter[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSourceFilter(s)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                    sourceFilter === s
+                      ? "bg-gold/20 text-gold border border-gold/30"
+                      : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
+                  }`}
+                >
+                  {s === "all" ? "All" : s === "qr" ? "QR" : "Counter"}
+                </button>
+              ))}
+            </div>
 
-          <span className="ml-4 text-xs text-foreground/40 uppercase tracking-wider font-heading">
-            Status:
-          </span>
-          {["all", "pending", "processing", "ready", "completed", "cancelled"].map(
-            (s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  statusFilter === s
-                    ? "bg-gold/20 text-gold border border-gold/30"
-                    : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
-                }`}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            )
-          )}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading mr-1">
+                Status:
+              </span>
+              {["all", "pending", "processing", "ready", "completed", "cancelled"].map(
+                (s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                      statusFilter === s
+                        ? "bg-gold/20 text-gold border border-gold/30"
+                        : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
 
-          <div className="relative ml-auto">
+          <div className="relative w-full lg:w-48">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
             <input
               type="text"
               placeholder="Search order #, table..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground placeholder:text-foreground/30 focus:border-gold/30 focus:outline-none w-48"
+              className="pl-8 pr-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground placeholder:text-foreground/30 focus:border-gold/30 focus:outline-none w-full"
             />
           </div>
         </div>
 
-        {/* Orders Table */}
-        <GlassCard className="overflow-hidden !p-0">
-          <div className="p-5 border-b border-white/5">
+        {/* Orders Table - Desktop View */}
+        <div className="hidden md:block">
+          <GlassCard className="overflow-hidden !p-0">
+            <div className="p-5 border-b border-white/5">
+              <h3 className="font-heading text-sm tracking-wider uppercase text-gold">
+                Order History
+              </h3>
+            </div>
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">#</th>
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Source</th>
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Customer</th>
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Table</th>
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Items</th>
+                    <th className="text-right p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Total</th>
+                    <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Status</th>
+                    <th className="text-right p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Time</th>
+                    <th className="text-center p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-foreground/30">
+                        No orders found
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                      >
+                        <td className="p-4 font-heading text-gold">#{order.order_short_id}</td>
+                        <td className="p-4">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            order.source === "counter"
+                              ? "bg-teal/20 text-teal-200"
+                              : "bg-gold/20 text-gold"
+                          }`}>
+                            {order.source === "counter" ? "Counter" : "QR"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-foreground/80">
+                          {order.customer_name || <span className="text-foreground/30">—</span>}
+                        </td>
+                        <td className="p-4 text-foreground/60">{order.table_id}</td>
+                        <td className="p-4 text-foreground/60">
+                          {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                        </td>
+                        <td className="p-4 text-right font-heading text-gold">{formatPrice(order.total)}</td>
+                        <td className="p-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                            statusColors[order.status] || "text-foreground/40 bg-white/5"
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right text-foreground/40 text-xs">
+                          {new Date(order.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="p-4 text-center">
+                          {order.status !== "cancelled" && order.status !== "completed" ? (
+                            cancellingOrderId === order.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="text"
+                                  placeholder="Reason..."
+                                  value={cancelReason}
+                                  onChange={(e) => setCancelReason(e.target.value)}
+                                  className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs text-foreground w-24 focus:border-red-400/30 focus:outline-none"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={handleCancelOrder}
+                                  disabled={!cancelReason.trim()}
+                                  className="px-2 py-1 rounded text-[10px] font-medium bg-red-400/20 text-red-400 border border-red-400/30 hover:bg-red-400/30 disabled:opacity-40 transition-all"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => { setCancellingOrderId(null); setCancelReason(""); }}
+                                  className="px-2 py-1 rounded text-[10px] font-medium bg-white/5 text-foreground/50 border border-white/10 hover:bg-white/10 transition-all"
+                                >
+                                  X
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setCancellingOrderId(order.id)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20 transition-all"
+                              >
+                                <XCircle className="w-3 h-3" />
+                                Cancel
+                              </button>
+                            )
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Orders Cards - Mobile View */}
+        <div className="block md:hidden space-y-4">
+          <div className="flex items-center justify-between px-2">
             <h3 className="font-heading text-sm tracking-wider uppercase text-gold">
               Order History
             </h3>
+            <span className="text-[10px] text-foreground/40 font-mono">{filtered.length} orders</span>
           </div>
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">#</th>
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Source</th>
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Customer</th>
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Table</th>
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Items</th>
-                  <th className="text-right p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Total</th>
-                  <th className="text-left p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Status</th>
-                  <th className="text-right p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Time</th>
-                  <th className="text-center p-4 text-foreground/40 font-medium uppercase tracking-wider text-xs">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="p-8 text-center text-foreground/30">
-                      No orders found
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
-                    >
-                      <td className="p-4 font-heading text-gold">#{order.order_short_id}</td>
-                      <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          order.source === "counter"
-                            ? "bg-teal/20 text-teal-200"
-                            : "bg-gold/20 text-gold"
-                        }`}>
-                          {order.source === "counter" ? "Counter" : "QR"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-foreground/80">
-                        {order.customer_name || <span className="text-foreground/30">—</span>}
-                      </td>
-                      <td className="p-4 text-foreground/60">{order.table_id}</td>
-                      <td className="p-4 text-foreground/60">
-                        {order.items.length} item{order.items.length !== 1 ? "s" : ""}
-                      </td>
-                      <td className="p-4 text-right font-heading text-gold">{formatPrice(order.total)}</td>
-                      <td className="p-4">
-                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                          statusColors[order.status] || "text-foreground/40 bg-white/5"
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right text-foreground/40 text-xs">
-                        {new Date(order.created_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="p-4 text-center">
-                        {order.status !== "cancelled" && order.status !== "completed" ? (
-                          cancellingOrderId === order.id ? (
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="text"
-                                placeholder="Reason..."
-                                value={cancelReason}
-                                onChange={(e) => setCancelReason(e.target.value)}
-                                className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs text-foreground w-24 focus:border-red-400/30 focus:outline-none"
-                                autoFocus
-                              />
-                              <button
-                                onClick={handleCancelOrder}
-                                disabled={!cancelReason.trim()}
-                                className="px-2 py-1 rounded text-[10px] font-medium bg-red-400/20 text-red-400 border border-red-400/30 hover:bg-red-400/30 disabled:opacity-40 transition-all"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => { setCancellingOrderId(null); setCancelReason(""); }}
-                                className="px-2 py-1 rounded text-[10px] font-medium bg-white/5 text-foreground/50 border border-white/10 hover:bg-white/10 transition-all"
-                              >
-                                X
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setCancellingOrderId(order.id)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20 transition-all"
-                            >
-                              <XCircle className="w-3 h-3" />
-                              Cancel
-                            </button>
-                          )
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+          {filtered.length === 0 ? (
+            <GlassCard className="text-center p-8 text-foreground/30">
+              No orders found
+            </GlassCard>
+          ) : (
+            filtered.map((order) => (
+              <GlassCard key={order.id} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-heading text-gold">#{order.order_short_id}</span>
+                  <span className="text-xs text-foreground/40">
+                    {new Date(order.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-foreground/40 block text-[9px] uppercase tracking-wider">Source</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium mt-1 ${
+                      order.source === "counter" ? "bg-teal/20 text-teal-200" : "bg-gold/20 text-gold"
+                    }`}>
+                      {order.source === "counter" ? "Counter" : "QR"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-foreground/40 block text-[9px] uppercase tracking-wider">Customer</span>
+                    <span className="text-foreground/80 mt-1 block truncate font-medium">
+                      {order.customer_name || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-foreground/40 block text-[9px] uppercase tracking-wider">Table</span>
+                    <span className="text-foreground/80 mt-1 block font-medium">{order.table_id}</span>
+                  </div>
+                  <div>
+                    <span className="text-foreground/40 block text-[9px] uppercase tracking-wider">Items</span>
+                    <span className="text-foreground/60 mt-1 block font-medium">{order.items.length} items</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                  <div>
+                    <span className="text-foreground/40 text-[9px] uppercase tracking-wider block">Total</span>
+                    <span className="font-heading text-gold text-sm">{formatPrice(order.total)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-medium ${
+                      statusColors[order.status] || "text-foreground/40 bg-white/5"
+                    }`}>
+                      {order.status}
+                    </span>
+                    
+                    {order.status !== "cancelled" && order.status !== "completed" && (
+                      cancellingOrderId === order.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Reason..."
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs text-foreground w-20 focus:border-red-400/30 focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleCancelOrder}
+                            disabled={!cancelReason.trim()}
+                            className="px-1.5 py-1 rounded text-[9px] font-medium bg-red-400/20 text-red-400 border border-red-400/30"
+                          >
+                            Go
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setCancellingOrderId(order.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20 transition-all cursor-pointer"
+                        >
+                          <XCircle className="w-2.5 h-2.5" />
+                          Cancel
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              </GlassCard>
+            ))
+          )}
+        </div>
 
         {/* Source Breakdown */}
         {orders.length > 0 && (

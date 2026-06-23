@@ -22,17 +22,10 @@ export default function BottomNavBar() {
     role === "admin"
       ? [
           ...baseItems.slice(0, 3),
-          { href: "/kitchen", label: "Kitchen", icon: Utensils },
           { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
           baseItems[3],
         ]
-      : role === "staff"
-        ? [
-            ...baseItems.slice(0, 3),
-            { href: "/staff", label: "Staff", icon: Briefcase },
-            baseItems[3],
-          ]
-        : baseItems;
+      : baseItems;
 
   return (
     <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 glassmorphism rounded-2xl border border-white/10 shadow-2xl shadow-gold/5 max-w-lg mx-auto transition-all duration-300">

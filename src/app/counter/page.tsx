@@ -667,7 +667,7 @@ function CounterContent() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => updateQty(item.dish_id, -1)}
-                              className="p-3 rounded hover:bg-white/10 transition-colors"
+                              className="p-1.5 sm:p-2.5 rounded hover:bg-white/10 transition-colors"
                             >
                               <Minus className="w-4 h-4 text-foreground/60" />
                             </button>
@@ -676,7 +676,7 @@ function CounterContent() {
                             </span>
                             <button
                               onClick={() => updateQty(item.dish_id, 1)}
-                              className="p-3 rounded hover:bg-white/10 transition-colors"
+                              className="p-1.5 sm:p-2.5 rounded hover:bg-white/10 transition-colors"
                             >
                               <Plus className="w-4 h-4 text-foreground/60" />
                             </button>
@@ -686,7 +686,7 @@ function CounterContent() {
                           </span>
                           <button
                             onClick={() => removeItem(item.dish_id)}
-                            className="p-3 rounded hover:bg-red-500/10 transition-colors"
+                            className="p-1.5 sm:p-2.5 rounded hover:bg-red-500/10 transition-colors"
                           >
                             <Trash2 className="w-4 h-4 text-red-400/60" />
                           </button>

@@ -305,11 +305,11 @@ export default function KitchenPage() {
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <div className="flex items-center gap-2 text-xs text-foreground/40">
-            <Clock className="w-3 h-3" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5">
+          <div className="flex items-center gap-2.5 text-xs text-foreground/40 flex-wrap">
+            <Clock className="w-3.5 h-3.5" />
             <UrgencyBadge createdAt={order.created_at} />
-            {new Date(order.created_at).toLocaleTimeString()}
+            <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <button
               type="button"
               onClick={() => {
@@ -317,12 +317,12 @@ export default function KitchenPage() {
                 setActionType("eta");
                 setSelectedEta(order.estimated_minutes || 15);
               }}
-              className="text-gold/60 hover:text-gold transition-colors font-medium border border-gold/20 rounded px-1.5 py-0.5 bg-gold/5"
+              className="text-gold/75 hover:text-gold transition-colors font-medium border border-gold/20 rounded px-2 py-0.5 bg-gold/5 cursor-pointer"
             >
               ~{order.estimated_minutes || 15}m
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={() => {
@@ -331,7 +331,7 @@ export default function KitchenPage() {
                 setCancelReason("customer_cancelled");
                 setCustomCancelReason("");
               }}
-              className="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs font-heading hover:bg-red-500/10 transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs font-heading hover:bg-red-500/10 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -339,6 +339,7 @@ export default function KitchenPage() {
               variant={variant}
               size="md"
               onClick={() => updateStatus(order.id, nextStatus)}
+              className="cursor-pointer"
             >
               {nextLabel}
             </Button>
@@ -353,24 +354,26 @@ export default function KitchenPage() {
       <main className="min-h-screen bg-[#050505]">
         <div className="max-w-7xl mx-auto px-6 pt-28 pb-8">
           <RealtimeBanner status={realtimeStatus} />
-          <div className="flex items-center gap-3 mb-8">
-            {realtimeStatus === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED && (
-              <Wifi className="w-4 h-4 text-green-400/60" />
-            )}
-            <ChefHat className="w-8 h-8 text-gold" />
-            <h1 className="font-heading text-3xl text-foreground">Kitchen Dashboard</h1>
-            <div className="flex items-center gap-3 ml-auto">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+            <div className="flex items-center gap-3">
+              {realtimeStatus === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED && (
+                <Wifi className="w-4 h-4 text-green-400/60" />
+              )}
+              <ChefHat className="w-8 h-8 text-gold" />
+              <h1 className="font-heading text-2xl sm:text-3xl text-foreground">Kitchen Dashboard</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end sm:ml-auto">
               <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-              heartbeatActive ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${heartbeatActive ? "bg-green-400" : "bg-amber-400"}`} />
-              {heartbeatActive ? "Staff Online" : "No Staff Online"}
-            </span>
-            {profile && <span className="text-xs text-foreground/40">{profile.email}</span>}
+                heartbeatActive ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${heartbeatActive ? "bg-green-400" : "bg-amber-400"}`} />
+                {heartbeatActive ? "Staff Online" : "No Staff Online"}
+              </span>
+              {profile && <span className="text-[10px] sm:text-xs text-foreground/40">{profile.email}</span>}
               <div className="relative">
                 <button
                   onClick={() => setShowSoundSettings(!showSoundSettings)}
-                  className="flex items-center gap-1.5 text-xs text-foreground/40 hover:text-gold transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-foreground/40 hover:text-gold transition-colors cursor-pointer"
                   title="Notification Sound Settings"
                 >
                   {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
@@ -394,7 +397,7 @@ export default function KitchenPage() {
                         <span className="text-xs text-foreground/70">Sound Notifications</span>
                         <button
                           onClick={toggleSound}
-                          className={`w-9 h-5 rounded-full p-0.5 transition-colors ${soundEnabled ? 'bg-gold' : 'bg-white/10'}`}
+                          className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${soundEnabled ? 'bg-gold' : 'bg-white/10'}`}
                         >
                           <div className={`w-4 h-4 rounded-full bg-background transition-transform ${soundEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
@@ -408,7 +411,7 @@ export default function KitchenPage() {
                             <button
                               key={t}
                               onClick={() => setToneType(t)}
-                              className={`py-1 text-xs rounded border transition-all ${
+                              className={`py-1 text-xs rounded border transition-all cursor-pointer ${
                                 toneType === t
                                   ? "bg-gold/20 text-gold border-gold/40"
                                   : "bg-white/5 text-foreground/50 border-white/5 hover:bg-white/10"
@@ -440,7 +443,7 @@ export default function KitchenPage() {
                       <button
                         onClick={() => playBeep(880, 0.4)}
                         disabled={!soundEnabled}
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/5 border border-white/10 text-xs text-foreground/80 hover:bg-white/10 disabled:opacity-40 transition-all font-medium"
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/5 border border-white/10 text-xs text-foreground/80 hover:bg-white/10 disabled:opacity-40 transition-all font-medium cursor-pointer"
                       >
                         <Play className="w-3 h-3" />
                         Test Notification Sound
@@ -451,7 +454,7 @@ export default function KitchenPage() {
               </div>
               <button
                 onClick={signOut}
-                className="flex items-center gap-1.5 text-xs text-foreground/40 hover:text-gold transition-colors"
+                className="flex items-center gap-1.5 text-xs text-foreground/40 hover:text-gold transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Logout
