@@ -26,7 +26,8 @@ To display screenshots of the application on GitHub, take screenshots of your pa
 ## What it does
 
 *   **3D Orbit Viewer**: Guests can touch-drag to orbit the 3D models, pinch to zoom, and inspect dish details and textures from any angle in real-time.
-*   **"View in your space" WebAR**: A button that projects the 3D models onto physical tables using Google Scene Viewer (Android) or Quick Look (iOS) with actual real-world dimensions to preview plating and sizes before ordering.
+*   **"View in your space" WebAR**: Projects 3D models onto physical dining tables using Google Scene Viewer (Android) or Quick Look (iOS) in actual real-world dimensions.
+    *   *Device Intelligence*: The system automatically detects device WebAR support. The **"View in Space"** button hides itself automatically on unsupported devices or restricted in-app browsers (like Instagram, Facebook, etc.) to prevent errors, while keeping the interactive 3D Orbit Viewer available. Natively supported on iOS 12+ (iPhone X/newer) and certified Android devices with Google Play Services for AR (ARCore) enabled.
 *   **Live Order Sync**: No page refreshes. The order tracking screen (`/order/track`) receives instant status updates (Pending, Processing, Ready) from the kitchen via Supabase realtime WebSockets.
 *   **Admin Analytics Dashboard (`/admin/dashboard`)**: A private portal for owners showing real-time sales statistics, table activity heatmaps, checkout source distribution (QR vs Counter), QR code generation for physical tables, and order cancellation wastage tracking.
 *   **Counter Panel (`/counter`)**: Used by counter staff to approve cart checkout, set preparation ETAs, process payments, and track order metrics.
@@ -148,14 +149,3 @@ Open [http://localhost:3000](http://localhost:3000) to view the app locally.
 
 ## License
 Licensed under the [MIT License](LICENSE).
-
-
-
-
-
-
-
-
-
-
-
