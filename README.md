@@ -6,31 +6,45 @@
 
 ---
 
-## ⚡ 30-Second Reviewer Walkthrough (Demo the Real-Time Loop)
+## ⚡ 30-Second Quick Start (Demo the Real-Time Loop)
 
-To see the real-time sync and Web Audio systems in action:
+To see the real-time order state engine and Web Audio system in action:
 
 1. **Open Side-by-Side Windows**:
-   * **Window A (Customer Menu)**: Open [`https://oasisroyale.vercel.app/menu`](https://oasisroyale.vercel.app/menu).
-   * **Window B (Kitchen Panel)**: Open [`https://oasisroyale.vercel.app/kitchen`](https://oasisroyale.vercel.app/kitchen).
+   * **Window A (Customer Menu)**: Open the menu page: [`https://oasisroyale.vercel.app/menu`](https://oasisroyale.vercel.app/menu).
+   * **Window B (Kitchen Panel)**: Open the kitchen dashboard: [`https://oasisroyale.vercel.app/kitchen`](https://oasisroyale.vercel.app/kitchen).
 2. **Place an Order (Window A)**:
-   * Click **"Tap to Interact"** on a dish card to load the 3D singleton model.
-   * Add a dish to your cart, click checkout, fill in the details, and place the order.
+   * Tap a menu card to load the 3D model container.
+   * Add a dish to your cart, click checkout, fill in your details, and place the order.
    * You'll be redirected to the real-time tracking page (`/order/track`).
 3. **Accept the Order (Window B)**:
-   * Look at the Kitchen dashboard. You'll hear a **synthesized chime** and see the new order pop up in real-time.
-   * Click **Accept Order** to set an ETA (e.g., 15 minutes).
+   * Look at the Kitchen dashboard. You'll hear a synthesized chime and see the new order pop up.
+   * Click **Accept Order** to assign an estimated time (ETA).
 4. **Watch Real-Time Status Updates (Window A)**:
    * Witness the tracking timeline transition from *Pending* to *Processing* instantly without page refresh, accompanied by status notification beeps!
 
 ---
 
-## 💎 Key Reviewer Highlights
+## 💎 Key Features
 
 *   **Zero-Crash 3D Singleton Canvas**: Mobile browsers crash if you load multiple WebGL elements. Oasis Royale uses exactly **one (1)** persistent `<model-viewer>` instance in global memory. When a customer interacts with a card, the instance is dynamically reparented. An `IntersectionObserver` handles automatic memory cleanup.
 *   **Native WebAR Preview**: Tap **"View in AR"** on iOS to launch **AR Quick Look** (pre-built `.usdz` assets), or on Android to launch **Google Scene Viewer** (`.glb` assets optimized using Draco compression to <1.2MB).
 *   **Real-time Order Stepper**: Fully powered by **Supabase Postgres Change WebSockets**—order status updates sync instantly between the kitchen panel and the user tracker.
 *   **Synthesized Web Audio System**: Uses the Web Audio API to synthesize custom chimes and notification tones dynamically, bypassing mobile browser media autoplay restrictions.
+
+---
+
+## 🔐 Staff & Admin Access
+
+Authentication is powered by **Supabase Auth**. Since this is a public repository, credentials are kept secure and are not hardcoded. 
+
+To test the kitchen dashboard (`/kitchen`) or the admin panel (`/admin`):
+1. **Sign Up**: Go to the Profile page [`/profile`](https://oasisroyale.vercel.app/profile) and register a new account.
+2. **Assign Staff Role**: In your Supabase SQL editor or table editor, update the user's role to `staff` or `admin` in the `profiles` table:
+   ```sql
+   UPDATE profiles SET role = 'staff' WHERE email = 'your-email@example.com';
+   ```
+   *(Note: For the Hack Club Macondo submission judges, the demo credentials can be shared privately in the submission portal description rather than exposing them in the public git repository).*
 
 ---
 
