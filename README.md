@@ -1,60 +1,31 @@
 ![Oasis Royale Banner](public/oasis_royale_banner.jpg)
 
-# 🍕 Oasis Royale — 3D Interactive WebAR Dining
+# Oasis Royale — 3D Interactive WebAR Dining
 
-> **A premium, mobile-first WebAR restaurant platform that lets customers project dishes directly onto their table in 3D, and tracks orders in real-time using Supabase WebSockets.**
+> A premium, mobile-first WebAR restaurant platform that lets customers project dishes directly onto their table in 3D, customize orders, and track preparation status in real-time.
 
-* **Live Web App**: [oasisroyale.vercel.app](https://oasisroyale.vercel.app/)
-* **Technologies**: Next.js 15, Supabase Database & Realtime, WebGL (Three.js + Google Model Viewer), Web Audio API, TailwindCSS 4, Vercel
-
----
-
-## 📸 User Interface Showcase
-
-| 📱 3D Interactive Menu | ⏳ Real-Time Order Tracker | 👨‍🍳 Kitchen Control Dashboard |
-| :---: | :---: | :---: |
-| ![Menu Page](public/menu-preview.png) | ![Tracker Page](public/tracker-preview.png) | ![Kitchen Dashboard](public/kitchen-preview.png) |
-
-*(Note: To display UI previews, save your screenshots inside the `public/` directory as `menu-preview.png`, `tracker-preview.png`, and `kitchen-preview.png` respectively).*
+*   **Live Web App**: [oasisroyale.vercel.app](https://oasisroyale.vercel.app/)
+*   **Built With**: Next.js 15, Supabase (Database & Realtime WebSockets), Three.js, Google Model-Viewer, Web Audio API, TailwindCSS 4, Vercel
 
 ---
 
-## ⚡ 30-Second Quick Start (Demo the Real-Time Loop)
+## ✨ Key Features & Capabilities
 
-To see the real-time order state engine and Web Audio notification system in action:
-
-1. **Open Side-by-Side Windows**:
-   * **Window A (Customer Menu)**: Open the [Customer Menu](https://oasisroyale.vercel.app/menu).
-   * **Window B (Counter Panel)**: Open the [Counter Dashboard](https://oasisroyale.vercel.app/counter).
-   * **Window C (Kitchen Panel)**: Open the [Kitchen Dashboard](https://oasisroyale.vercel.app/kitchen).
-2. **Place an Order (Window A)**:
-   * Tap a menu card to load the 3D model, add a dish to the cart, and complete checkout.
-   * You'll be redirected to the real-time tracking page (`/order/track`) in `pending` status.
-3. **Approve Payment (Window B - Counter)**:
-   * Log in with your staff account. Approve the order to transition it to `processing` and set a preparation ETA.
-4. **Prepare Order (Window C - Kitchen)**:
-   * Log in with your staff account. The kitchen will hear a synthesized chime and see the order. Click **Ready** when cooked to transition the status to `ready`.
-5. **Watch Real-Time Status Updates (Window A)**:
-   * Witness the tracking timeline transition from *Pending* to *Processing* and then *Ready* instantly without page refresh, accompanied by Web Audio notification tones!
+*   📱 **Interactive 3D Menu**: Guests browse high-fidelity 3D models of dishes directly in their mobile browser. Rotate, zoom, and inspect details seamlessly.
+*   🕶️ **WebAR Placement**: View dishes in Augmented Reality projected onto real tables to preview sizes and plating before ordering.
+*   ⚡ **Zero-Polling Real-Time Tracking**: Immediate order status syncing (from *Pending* to *Processing*, *Ready*, and *Completed*) powered by Supabase PostgreSQL replication.
+*   🔔 **Dynamic Web Audio Chimes**: Live, procedural sound synthesis alerts counter and kitchen staff when new orders arrive, or notifies customers of status transitions.
+*   👨‍🍳 **Staff Operations Suite**:
+    *   **Counter Dashboard (`/counter`)**: Approves checkout, sets preparation ETAs, and processes payments.
+    *   **Kitchen Panel (`/kitchen`)**: Tracks active cooking orders with priority timers and ready states.
+    *   **Dispatch Board (`/dispatch`)**: Manages the pickup queue for served orders.
 
 ---
 
-## 🔐 Staff & Admin Access
-
-Authentication is powered by **Supabase Auth**. Since this is a public repository, credentials are kept secure and are not hardcoded. 
-
-* **Live Testing**: The credentials for the Staff accounts (used to access `/counter`, `/kitchen`, and `/dispatch`) are provided privately in the **submission notes** of the portal.
-* **Local Development**: If you are hosting your own fork of this project, you can register a new account on [`/profile`](https://oasisroyale.vercel.app/profile) and promote their role by running:
-  ```sql
-  UPDATE profiles SET role = 'staff' WHERE email = 'your-email@example.com';
-  ```
-
----
-
-## 🏗️ Technical Architecture
+## 🛠️ Architecture & Technical Highlights
 
 ### 1. Zero-Crash 3D Singleton Canvas Reparenting
-Mobile WebGL engines enforce strict memory budgets (often crashing when loading multiple `<model-viewer>` or Three.js instances). Oasis Royale solves this by keeping **exactly one (1)** persistent renderer context in global memory, reparenting it dynamically to target cards as the user interacts. An `IntersectionObserver` handles automatic detachment and cleanup.
+Mobile WebGL engines enforce strict memory budgets and can crash when initializing multiple `<model-viewer>` or Three.js contexts. Oasis Royale resolves this by maintaining **exactly one (1)** persistent renderer canvas in memory and dynamically reparenting it to the active card the user interacts with. An `IntersectionObserver` handles automatic detachment and memory cleanup.
 
 ```mermaid
 graph TD
@@ -69,8 +40,8 @@ graph TD
     H --> A
 ```
 
-### 2. Supabase Real-Time Order Stepper
-Instead of polling, the client opens a Postgres change WebSocket subscription filtering specifically by the current session ID to track the status path.
+### 2. Event-Driven Real-Time Synchronization
+Instead of heavy API polling, the client establishes a Postgres changes WebSocket channel filtered by the active session ID.
 
 ```mermaid
 sequenceDiagram
@@ -80,34 +51,36 @@ sequenceDiagram
     
     Customer->>DB: 1. Place Order (Inserts into 'orders' table)
     DB-->>Staff: 2. Broadcasts INSERT Event (WebSocket Realtime)
-    Note over Staff: Chime alert sounds.<br/>Order shown in Pending.
-    Staff->>DB: 3. Staff clicks Accept Order (Updates status to 'processing')
+    Note over Staff: Synthesized chime plays.<br/>Order displays on queue.
+    Staff->>DB: 3. Staff accepts order (Updates status to 'processing')
     DB-->>Customer: 4. Broadcasts UPDATE Event (WebSocket Realtime)
-    Note over Customer: Status timeline moves to Processing.<br/>Web Audio transition beep plays.
+    Note over Customer: Status stepper transitions.<br/>Procedural audio tone plays.
 ```
 
 ---
 
-## 📦 Core Dependencies & Components
+## 📦 Core Technology Stack
 
-| Dependency | Purpose |
-| :--- | :--- |
-| **Next.js 15** | Framework for routing, server API handlers, and deployment. |
-| **Supabase SDK** | Handles user authentication and PostgreSQL WebSocket replication. |
-| **Three.js & Google Model Viewer** | Custom WebGL container rendering interactive 3D structures. |
-| **Framer Motion & GSAP** | High-performance, hardware-accelerated animations. |
-| **Web Audio API** | Synthesizes status alerts dynamically without relying on static files. |
+| Technology | Purpose | Key Details |
+| :--- | :--- | :--- |
+| **Next.js 15 & React 19** | Application Framework | Fast Server-Side Rendering & App Router navigation |
+| **Supabase SDK** | Backend-as-a-Service | Realtime WebSockets, database layer, and user authentication |
+| **Three.js & Model-Viewer** | WebGL Rendering | Displays interactive 3D assets and enables AR projection |
+| **Framer Motion & GSAP** | High-Performance Animations | Smooth page transitions and floating ambient embers |
+| **Web Audio API** | Procedural Audio | Synthesizes alerts dynamically in-browser (zero asset load) |
+| **TailwindCSS 4** | Styling | Modern, highly optimized, utility-first design system |
 
 ---
 
 ## 🚀 Local Setup & Installation
 
-Get the project running on your local machine in 3 simple steps:
+Follow these steps to run the project locally on your machine:
 
-### 1. Clone the repository
+### 1. Clone & Install
 ```bash
 git clone https://github.com/Huzaifa-Siddique/oasis-royale.git
 cd oasis-royale
+npm install --legacy-peer-deps
 ```
 
 ### 2. Configure Environment Variables
@@ -117,29 +90,37 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-public-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
-*(Note: If no environment variables are defined, the app automatically falls back to a sandbox database configured in `src/lib/supabase.ts` for out-of-the-box testing).*
+*(Note: If no custom environment variables are provided, the app automatically falls back to a sandbox database configured in `src/lib/supabase.ts` for instant testing).*
 
-### 3. Initialize the Supabase Database (Optional)
-If setting up your own Supabase instance:
-1. Go to your **Supabase Dashboard SQL Editor**.
-2. Run the script inside [`supabase-schema.sql`](supabase-schema.sql) to create the tables (`dishes`, `orders`, `profiles`, `staff`), establish RLS policies, and enable real-time replication.
+### 3. Set Up Database Schema
+If using your own Supabase instance, run the contents of [`supabase-schema.sql`](supabase-schema.sql) in your Supabase SQL Editor. This script creates the tables (`dishes`, `orders`, `profiles`, `staff`), establishes Row Level Security (RLS) policies, and enables database replication for real-time updates.
 
-### 4. Install Dependencies & Launch
+### 4. Run the Application
 ```bash
-npm install --legacy-peer-deps
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the application locally.
+Open [http://localhost:3000](http://localhost:3000) to view it.
 
 ---
 
-## 📦 Build-Time 3D Compression
+## 📦 Build & Optimization Tools
 
-Optimize 3D models to keep sizes below 1.2MB:
-* **Draco GLB Compression**: `npm run compress`
-* **Apple Quick Look USDZ Export**: `npm run convert-usdz`
+Optimize assets and compile the application:
+
+*   **Draco GLB Compression**: Compress 3D models to keep payload sizes minimal:
+    ```bash
+    npm run compress
+    ```
+*   **USDZ Conversion**: Export models for iOS Quick Look support:
+    ```bash
+    npm run convert-usdz
+    ```
+*   **Production Build**: Compile and optimize the project:
+    ```bash
+    npm run build
+    ```
 
 ---
 
 ## 📜 License
-Licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
