@@ -5,7 +5,7 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
 ---
 
 ## 📅 Last Updated
-*   **Timestamp**: 2026-06-23 20:53:00 (Local Time)
+*   **Timestamp**: 2026-06-23 21:18:00 (Local Time)
 *   **Project**: Oasis Royale (Next.js 15 + Supabase + Vercel)
 *   **Active Directory**: `D:\HUZAIFA\Oasis Royale.worktrees\agents-netlify-supabase-env-fix`
 *   **Active Branch**: `agents/netlify-supabase-env-fix`
@@ -33,7 +33,6 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
    * Untracked `.goose_env/` (python venv) and `scratch/` directories to save size.
    * Untracked multi-agent chat logs in `context/` and `skills/` to prevent size warnings.
    * Moved speculative technical documents from the root to `docs/development/`.
-   * Overwrote the root `README.md` to format a highly review-friendly 30-Second Overview, Quick-start Side-by-side walkthrough, and system Mermaid diagrams.
 
 3. **Code Enhancements & Verifications**:
    * Removed dynamic dish filters in `src/app/api/dishes/route.ts` to show all dishes.
@@ -43,15 +42,22 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
    * Localized pricing in USD (`$`), set US phone number placeholders (`+1`), and updated the footer address to Beverly Hills.
    * Restored local dependencies using `npm install --legacy-peer-deps` and ran a production compile build (`npm run build`), which compiled successfully with **0 errors**.
 
-4. **Vercel Hosting Alignment**:
-   * Replaced all occurrences of Netlify hosting with Vercel configuration/documentation.
-   * Updated badges, walkthrough text, and hyperlinks to point to the live Vercel URL: `https://oasisroyale.vercel.app/`.
+4. **README Audit & Refactor (Macondo Guidelines Compliance)**:
+   * Brutally audited the existing README against the official Hack Club Macondo evaluation criteria.
+   * Generated a stunning luxury brand banner (`public/oasis_royale_banner.jpg`) using AI image generation to represent the luxury brand identity immediately on GitHub.
+   * Restructured the layout to be extremely visual and concise:
+     * Placed the generated banner at the top.
+     * Created a structured table showing screenshot placeholders for the interactive menu, order tracker, and kitchen dashboard.
+     * Simplified the walkthrough instructions and removed all "reviewer" jargon to focus purely on the product details.
+     * Listed core third-party dependencies/components (`model-viewer`, `Three.js`, `Supabase`, `Framer Motion`).
+     * Added note about database configuration fallback which allows local testing out-of-the-box.
+   * Successfully pushed all updates to the remote branch `agents/netlify-supabase-env-fix`.
 
 ---
 
 ## 🔮 What to Do Next / Future Tasks
 
-*   **Arabic-English Toggle**:
-    *   If localization is requested later, plan 2–4 hours to extract translation files (`en.json`, `ar.json`), implement a React translation Context, and handle RTL styling rules for Arabic.
+*   **RTL/Language Toggle**:
+    *   Plan 2–4 hours to extract translation files (`en.json`, `ar.json`), implement a translation Context, and handle RTL rules for Arabic if requested.
 *   **Merge into Main Branch**:
     *   Before final project submission on the Macondo portal, merge `agents/netlify-supabase-env-fix` into the `main` branch on GitHub so it shows up on the default landing view.
