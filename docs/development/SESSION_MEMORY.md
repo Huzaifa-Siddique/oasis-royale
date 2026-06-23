@@ -5,11 +5,11 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
 ---
 
 ## 📅 Last Updated
-*   **Timestamp**: 2026-06-23 20:34:00 (Local Time)
-*   **Project**: Oasis Royale (Next.js 15 + Supabase + Netlify)
+*   **Timestamp**: 2026-06-23 20:53:00 (Local Time)
+*   **Project**: Oasis Royale (Next.js 15 + Supabase + Vercel)
 *   **Active Directory**: `D:\HUZAIFA\Oasis Royale.worktrees\agents-netlify-supabase-env-fix`
 *   **Active Branch**: `agents/netlify-supabase-env-fix`
-*   **Remote URL**: `https://github.com/Huzaifa-Siddique/oasis-royale.git` (Renamed from `oasisroayel`)
+*   **Remote URL**: `https://github.com/Huzaifa-Siddique/oasis-royale.git`
 
 ---
 
@@ -24,24 +24,28 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
 
 1. **Repaired & Initialized Git Repository**:
    * Initialized `D:\HUZAIFA\Oasis Royale.worktrees\agents-netlify-supabase-env-fix` as a standalone git repository to resolve broken `.git` worktree pointers.
-   * Restored `.gitignore` to prevent tracking of local dependencies (`node_modules/`, `.next/`).
+   * Restored `.gitignore` to prevent tracking of local dependencies.
    * Configured user credentials locally (`Huzaifa Siddique` / `siddiquehuzaifa248@gmail.com`).
-   * Staged and committed all clean project files.
-   * Successfully pushed to the renamed repository: `https://github.com/Huzaifa-Siddique/oasis-royale.git` on branch `agents/netlify-supabase-env-fix`.
+   * Staged and committed clean project files.
+   * Successfully pushed to the remote repository on branch `agents/netlify-supabase-env-fix`.
 
 2. **Cleaned Up Repository Bloat (Hack Club Ready)**:
    * Untracked `.goose_env/` (python venv) and `scratch/` directories to save size.
-   * Untracked massive multi-agent chat logs in `context/` and `skills/` to prevent "Too Much AI" warnings.
-   * Moved all loose technical specs (`prd.md`, `trd.md`, `uiuxdesign.md`, `master_plan.md`, `AR-PROBLEM-HISTORY.md`, `AR_SETUP_GUIDE.md`) from the root into `docs/development/` for a clean layout.
-   * Generated an open-source `LICENSE` (MIT) and a comprehensive, visual `README.md` at the root.
+   * Untracked multi-agent chat logs in `context/` and `skills/` to prevent size warnings.
+   * Moved speculative technical documents from the root to `docs/development/`.
+   * Overwrote the root `README.md` to format a highly review-friendly 30-Second Overview, Quick-start Side-by-side walkthrough, and system Mermaid diagrams.
 
 3. **Code Enhancements & Verifications**:
-   * Removed dynamic dish filters in `src/app/api/dishes/route.ts` to show all dishes (not just ones with 3D models).
-   * Fixed the `StatusStepper` in `track/page.tsx` so the "Cancelled" step is only appended if the order is actually cancelled.
+   * Removed dynamic dish filters in `src/app/api/dishes/route.ts` to show all dishes.
+   * Fixed `StatusStepper` in `track/page.tsx` so "Cancelled" only appears if the order is cancelled.
    * Set up real-time orders status syncing using Supabase Websockets (`postgres_changes` channel) on the Order Page.
-   * Linked the floating Cart button directly to the Original Order page (`/order`) using Next.js Link components.
+   * Linked the floating Cart button directly to the checkout page (`/order`).
    * Localized pricing in USD (`$`), set US phone number placeholders (`+1`), and updated the footer address to Beverly Hills.
-   * Ran a final compilation build (`npm run build`) which completed successfully with **0 errors**.
+   * Restored local dependencies using `npm install --legacy-peer-deps` and ran a production compile build (`npm run build`), which compiled successfully with **0 errors**.
+
+4. **Vercel Hosting Alignment**:
+   * Replaced all occurrences of Netlify hosting with Vercel configuration/documentation.
+   * Updated badges, walkthrough text, and hyperlinks to point to the live Vercel URL: `https://oasisroyale.vercel.app/`.
 
 ---
 
