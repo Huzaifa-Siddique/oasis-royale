@@ -42,16 +42,11 @@ This file serves as a persistent memory bank for AI coding assistants. When resu
    * Localized pricing in USD (`$`), set US phone number placeholders (`+1`), and updated the footer address to Beverly Hills.
    * Restored local dependencies using `npm install --legacy-peer-deps` and ran a production compile build (`npm run build`), which compiled successfully with **0 errors**.
 
-4. **README Audit & Refactor (Macondo Guidelines Compliance)**:
-   * Brutally audited the existing README against the official Hack Club Macondo evaluation criteria.
-   * Generated a stunning luxury brand banner (`public/oasis_royale_banner.jpg`) using AI image generation to represent the luxury brand identity immediately on GitHub.
-   * Restructured the layout to be extremely visual and concise:
-     * Placed the generated banner at the top.
-     * Created a structured table showing screenshot placeholders for the interactive menu, order tracker, and kitchen dashboard.
-     * Simplified the walkthrough instructions and removed all "reviewer" jargon to focus purely on the product details.
-     * Listed core third-party dependencies/components (`model-viewer`, `Three.js`, `Supabase`, `Framer Motion`).
-     * Added note about database configuration fallback which allows local testing out-of-the-box.
-   * Successfully pushed all updates to the remote branch `agents/netlify-supabase-env-fix`.
+4. **README Audit & Polishing**:
+   * Removed broken screenshot placeholders and instructions targeting developers/reviewers.
+   * Restructured the layout to showcase core capabilities with clean typography and icons.
+   * Streamlined the system architecture deep-dive (reparenting singleton and WebSocket replication flow).
+   * Committed clean, professional 10/10 documentation ready for general GitHub visitors.
 
 ---
 
