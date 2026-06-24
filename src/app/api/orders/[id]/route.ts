@@ -109,8 +109,19 @@ export async function PATCH(
       updateData.estimated_minutes_set_by = setBy;
 
       if (hasEtaChangesColumn) {
-        const etaChanges: Array<{ from: number | null; to: number; set_by: string; changed_at: string }> =
-          Array.isArray((current as any).eta_changes) ? (current as any).eta_changes : [];
+        let etaChanges: Array<{ from: number | null; to: number; set_by: string; changed_at: string }> = [];
+        if (current.eta_changes) {
+          try {
+            etaChanges = typeof current.eta_changes === "string"
+              ? JSON.parse(current.eta_changes)
+              : current.eta_changes;
+          } catch {
+            etaChanges = [];
+          }
+        }
+        if (!Array.isArray(etaChanges)) {
+          etaChanges = [];
+        }
 
         etaChanges.push({
           from: oldEta,
