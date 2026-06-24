@@ -211,8 +211,8 @@ export default function MenuClient() {
   };
 
   return (
-    <main className="min-h-screen pb-32">
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <main className="min-h-screen pb-32 pt-28 sm:pt-32">
+      <div className="max-w-7xl mx-auto px-6 py-6 sm:py-12">
         <div className="text-center mb-12">
           <span className="text-gold text-sm font-heading tracking-[0.2em] uppercase">
             Discover

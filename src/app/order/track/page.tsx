@@ -287,8 +287,8 @@ export default function TrackPage() {
   const isCompleted = status === "completed";
 
   return (
-    <main className="min-h-screen">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+    <main className="min-h-screen pt-28 sm:pt-32">
+      <div className="max-w-2xl mx-auto px-6 py-6 sm:py-12">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-heading text-2xl text-foreground">Order #{order.order_short_id}</h1>
           <ElapsedTimer createdAt={order.created_at} />

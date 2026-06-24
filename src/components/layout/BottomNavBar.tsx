@@ -28,7 +28,7 @@ export default function BottomNavBar() {
       : baseItems;
 
   return (
-    <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 glassmorphism rounded-2xl border border-white/10 shadow-2xl shadow-gold/5 max-w-lg mx-auto transition-all duration-300">
+    <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 bg-[#0A0A0A]/85 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl shadow-gold/5 max-w-lg mx-auto transition-all duration-300">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const active = pathname === item.href;

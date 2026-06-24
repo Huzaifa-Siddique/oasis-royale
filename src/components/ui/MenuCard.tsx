@@ -342,7 +342,3 @@ function MenuCard({
 export default memo(MenuCard);
 
 
-
-
-
-

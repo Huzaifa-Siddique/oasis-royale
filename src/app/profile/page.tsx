@@ -84,8 +84,8 @@ export default function ProfilePage() {
 
   if (user && profile) {
     return (
-      <div className="min-h-screen bg-[#050505]">
-        <div className="max-w-md mx-auto px-4 py-20">
+      <div className="min-h-screen bg-[#050505] pt-28 sm:pt-32">
+        <div className="max-w-md mx-auto px-4 pb-20">
           <GlassCard className="text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto">
               <User className="w-8 h-8 text-gold" />
@@ -127,8 +127,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505]">
-      <div className="max-w-md mx-auto px-4 py-20">
+    <div className="min-h-screen bg-[#050505] pt-28 sm:pt-32">
+      <div className="max-w-md mx-auto px-4 pb-20">
         <div className="text-center mb-8">
           <User className="w-10 h-10 text-gold mx-auto mb-3" />
           <h1 className="font-heading text-2xl text-foreground">

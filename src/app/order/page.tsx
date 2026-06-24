@@ -471,9 +471,9 @@ export default function OrderPage() {
   const hasItems = cartItems.length > 0;
 
   return (
-    <main className="min-h-[calc(100dvh-64px)] flex flex-col">
+    <main className="min-h-screen flex flex-col pt-28 sm:pt-32">
       <div className="max-w-3xl mx-auto w-full px-6 flex flex-col flex-1 pb-safe-nav">
-        <h1 className="font-heading text-3xl md:text-5xl text-foreground mb-8 pt-12 flex-shrink-0">
+        <h1 className="font-heading text-3xl md:text-5xl text-foreground mb-8 pt-4 flex-shrink-0">
           Your Order
         </h1>
 
