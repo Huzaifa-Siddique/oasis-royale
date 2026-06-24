@@ -15,7 +15,7 @@ function StaffHubContent() {
         <div className="mb-10">
           <h1 className="font-heading text-3xl md:text-4xl text-foreground mb-2">Staff Hub</h1>
           <p className="text-foreground/40 text-sm">
-            Welcome back{profile?.email ? `, ${profile.email}` : ""}
+            Welcome back{profile?.email ? `, ${profile.email.replace(/(.{3})(.*)(@.*)/, "$1***$3")}` : ""}
           </p>
         </div>
 

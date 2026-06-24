@@ -369,7 +369,7 @@ export default function KitchenPage() {
                 <span className={`w-1.5 h-1.5 rounded-full ${heartbeatActive ? "bg-green-400" : "bg-amber-400"}`} />
                 {heartbeatActive ? "Staff Online" : "No Staff Online"}
               </span>
-              {profile && <span className="text-[10px] sm:text-xs text-foreground/40">{profile.email}</span>}
+              {profile && <span className="text-[10px] sm:text-xs text-foreground/40">{profile.email.replace(/(.{3})(.*)(@.*)/, "$1***$3")}</span>}
               <div className="relative">
                 <button
                   onClick={() => setShowSoundSettings(!showSoundSettings)}

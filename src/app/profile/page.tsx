@@ -91,7 +91,7 @@ export default function ProfilePage() {
               <User className="w-8 h-8 text-gold" />
             </div>
             <h1 className="font-heading text-2xl text-foreground">{profile.name || "Customer"}</h1>
-            <p className="text-sm text-foreground/50">{profile.email}</p>
+            <p className="text-sm text-foreground/50">{profile.email.replace(/(.{3})(.*)(@.*)/, "$1***$3")}</p>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gold/10 text-gold uppercase tracking-wider">
               {profile.role}
             </span>
