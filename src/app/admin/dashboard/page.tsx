@@ -118,8 +118,9 @@ function AdminDashboardContent() {
     let avgProcessingTime = 0;
     if (completed.length > 0) {
       const totalMs = completed.reduce((sum, o) => {
-        const created = new Date(o.created_at).getTime();
-        const updated = new Date(o.updated_at).getTime();
+        const created = o.created_at ? new Date(o.created_at).getTime() : 0;
+        const updated = o.updated_at ? new Date(o.updated_at).getTime() : 0;
+        if (isNaN(created) || isNaN(updated) || created === 0 || updated === 0) return sum;
         return sum + (updated - created);
       }, 0);
       avgProcessingTime = Math.round(totalMs / completed.length / 60000);
@@ -621,7 +622,10 @@ function AdminDashboardContent() {
                     const hourly: Record<number, number> = {};
                     for (let i = 0; i < 24; i++) hourly[i] = 0;
                     orders.forEach((o) => {
-                      const h = new Date(o.created_at).getHours();
+                      if (!o.created_at) return;
+                      const dateObj = new Date(o.created_at);
+                      if (isNaN(dateObj.getTime())) return;
+                      const h = dateObj.getHours();
                       hourly[h] = (hourly[h] || 0) + 1;
                     });
                     const max = Math.max(...Object.values(hourly), 1);
@@ -672,7 +676,10 @@ function AdminDashboardContent() {
                     const dates: string[] = [];
                     orders.forEach((o) => {
                       if (o.status === "cancelled") return;
-                      const d = new Date(o.created_at).toISOString().slice(0, 10);
+                      if (!o.created_at) return;
+                      const dateObj = new Date(o.created_at);
+                      if (isNaN(dateObj.getTime())) return;
+                      const d = dateObj.toISOString().slice(0, 10);
                       if (!byDate[d]) { byDate[d] = 0; dates.push(d); }
                       byDate[d] += o.total;
                     });
