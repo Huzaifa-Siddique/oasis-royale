@@ -329,10 +329,20 @@ export default function TrackPage() {
               </div>
             )}
           {isProcessing && !isReady && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-center justify-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 font-medium">Payment Confirmed</span>
-              <span className="text-foreground/50 text-sm ml-2">— Your order is being prepared</span>
+            <div className="space-y-3">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 font-medium">Payment Confirmed</span>
+                <span className="text-foreground/50 text-sm ml-2">— Your order is being prepared</span>
+              </div>
+              
+              {order.estimated_minutes && (
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center justify-center gap-1">
+                  <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading">Estimated Prep Time</span>
+                  <span className="text-2xl font-heading text-gold">~{order.estimated_minutes} Minutes</span>
+                  <span className="text-[10px] text-foreground/30 text-center">Our kitchen chefs are on it! We will notify you when it's ready.</span>
+                </div>
+              )}
             </div>
           )}
           {isReady && !isCompleted && (
