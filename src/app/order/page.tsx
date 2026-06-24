@@ -101,13 +101,13 @@ export default function OrderPage() {
       } catch {}
     }
 
-    let tid = localStorage.getItem("oasis_table_id");
-    if (!tid) {
-      const cookieMatch = document.cookie.match(/(?:^|;\s*)oasis_table_id=([^;]*)/);
-      if (cookieMatch) {
-        tid = cookieMatch[1];
-        localStorage.setItem("oasis_table_id", tid);
-      }
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)oasis_table_id=([^;]*)/);
+    let tid = cookieMatch ? cookieMatch[1] : null;
+
+    if (tid) {
+      localStorage.setItem("oasis_table_id", tid);
+    } else {
+      tid = localStorage.getItem("oasis_table_id");
     }
     if (tid) setTableId(tid);
   }, []);
@@ -490,7 +490,7 @@ export default function OrderPage() {
               {cartItems.map((item) => (
                 <GlassCard key={item.id} className="flex items-center gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-medium text-foreground truncate">{item.name}</h3>
+                    <h3 className="font-sans font-medium text-foreground">{item.name}</h3>
                     <p className="text-gold text-sm mt-0.5">{formatPrice(item.price)}</p>
                   </div>
                   <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">

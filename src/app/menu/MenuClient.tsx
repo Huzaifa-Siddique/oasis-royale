@@ -50,15 +50,15 @@ export default function MenuClient() {
     fetchDishes();
   }, [fetchDishes]);
 
-  // Load table ID from localStorage/cookie
+  // Load table ID from localStorage/cookie (prioritize cookie updated by QR scan redirect)
   useEffect(() => {
-    let tid = localStorage.getItem("oasis_table_id");
-    if (!tid) {
-      const cookieMatch = document.cookie.match(/(?:^|;\s*)oasis_table_id=([^;]*)/);
-      if (cookieMatch) {
-        tid = cookieMatch[1];
-        localStorage.setItem("oasis_table_id", tid);
-      }
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)oasis_table_id=([^;]*)/);
+    let tid = cookieMatch ? cookieMatch[1] : null;
+
+    if (tid) {
+      localStorage.setItem("oasis_table_id", tid);
+    } else {
+      tid = localStorage.getItem("oasis_table_id");
     }
     if (tid) setTableId(tid);
   }, []);
@@ -394,7 +394,7 @@ export default function MenuClient() {
                   className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 flex items-center gap-4 transition-all hover:border-white/10"
                 >
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-sans font-medium text-sm text-foreground truncate">{item.name}</h4>
+                    <h4 className="font-sans font-medium text-sm text-foreground">{item.name}</h4>
                     <p className="text-gold text-xs mt-0.5">{formatPrice(item.price)}</p>
                   </div>
                   <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">

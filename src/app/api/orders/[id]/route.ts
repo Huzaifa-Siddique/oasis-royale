@@ -42,15 +42,27 @@ export async function PATCH(
     }
 
     // --- Fetch current order (needed for ETA validation & eta_changes append) ---
-    const { data: current, error: fetchErr } = await supabase
+    let currentSelect = await supabase
       .from("orders")
       .select("status, estimated_minutes, eta_changes, customer_phone")
       .eq("id", id)
       .single();
 
-    if (fetchErr || !current) {
-      return Response.json({ error: fetchErr?.message ?? "Order not found" }, { status: 404 });
+    let hasEtaChangesColumn = true;
+    if (currentSelect.error?.message?.includes('column "eta_changes" does not exist')) {
+      hasEtaChangesColumn = false;
+      currentSelect = await supabase
+        .from("orders")
+        .select("status, estimated_minutes, customer_phone")
+        .eq("id", id)
+        .single();
     }
+
+    if (currentSelect.error || !currentSelect.data) {
+      return Response.json({ error: currentSelect.error?.message ?? "Order not found" }, { status: 404 });
+    }
+
+    const current = currentSelect.data;
 
     // --- Validate kitchen can only INCREASE ETA ---
     const setBy = estimated_minutes_set_by || auth.profile?.name || auth.user?.email || "unknown";
@@ -96,17 +108,19 @@ export async function PATCH(
       updateData.estimated_minutes = estimated_minutes;
       updateData.estimated_minutes_set_by = setBy;
 
-      const etaChanges: Array<{ from: number | null; to: number; set_by: string; changed_at: string }> =
-        Array.isArray(current.eta_changes) ? current.eta_changes : [];
+      if (hasEtaChangesColumn) {
+        const etaChanges: Array<{ from: number | null; to: number; set_by: string; changed_at: string }> =
+          Array.isArray((current as any).eta_changes) ? (current as any).eta_changes : [];
 
-      etaChanges.push({
-        from: oldEta,
-        to: estimated_minutes,
-        set_by: setBy,
-        changed_at: now,
-      });
+        etaChanges.push({
+          from: oldEta,
+          to: estimated_minutes,
+          set_by: setBy,
+          changed_at: now,
+        });
 
-      updateData.eta_changes = JSON.stringify(etaChanges);
+        updateData.eta_changes = JSON.stringify(etaChanges);
+      }
     }
 
     // --- Execute update (with column-not-found fallback) ---
@@ -116,6 +130,19 @@ export async function PATCH(
       .eq("id", id)
       .select()
       .single();
+
+    // Graceful degradation: if eta_changes column is missing, retry without it
+    if (error?.message?.includes('column "eta_changes" does not exist')) {
+      delete updateData.eta_changes;
+      const result = await supabase
+        .from("orders")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     // Graceful degradation: if status_changed_at column is missing, retry without it
     if (error?.message?.includes('column "status_changed_at" does not exist')) {
