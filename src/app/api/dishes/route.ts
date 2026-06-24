@@ -16,7 +16,12 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const response = NextResponse.json(dishes || [], { status: 200 });
+  // Filter out any dishes that do not have a 3D model
+  const arDishes = (dishes || []).filter(
+    (dish) => dish.model_url && dish.model_url.trim() !== ""
+  );
+
+  const response = NextResponse.json(arDishes, { status: 200 });
   response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=30');
   return response;
 }

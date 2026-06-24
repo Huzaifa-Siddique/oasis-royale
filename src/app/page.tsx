@@ -179,24 +179,6 @@ export default function HomePage() {
           </Link>
         </div>
       </Section>
-
-      {/* CTA */}
-      <Section background="gold">
-        <div className="text-center max-w-2xl mx-auto">
-          <SectionHeader
-            tag="Get Started"
-            title="Ready to Transform Your Restaurant?"
-            subtitle="Set up in minutes. No hardware, no contracts, no commitment. Pay only when you're satisfied."
-          />
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/menu">
-              <Button variant="primary" size="lg">
-                Try the Demo
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Section>
     </>
   );
 }

@@ -170,17 +170,6 @@ CREATE POLICY "eta_notifications_insert" ON eta_notifications FOR INSERT WITH CH
 -- =====================================================
 -- SEED DATA - Sample Dishes
 -- =====================================================
-INSERT INTO dishes (name, description, price, category, image_url, model_url, is_available) VALUES
-  ('Smoked Brisket', 'Slow-smoked for 16 hours with our signature dry rub, served with house pickles.', 34.99, 'Grilled Specialties', 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600', NULL, true),
-  ('Golden Saffron Risotto', 'Creamy arborio rice infused with saffron and finished with parmesan.', 28.99, 'Signature Entrees', 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=600', NULL, true),
-  ('Oasis Royale Burger', 'Wagyu patty, truffle aioli, caramelized onions, served with truffle fries.', 26.99, 'Grilled Specialties', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600', NULL, true),
-  ('Desert Rose Cocktail', 'Vodka, rose syrup, lime, and a hint of pomegranate over crushed ice.', 18.99, 'Signature Cocktails', 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600', NULL, true),
-  ('Charred Octopus', 'Mediterranean octopus charred to perfection, with lemon-herb vinaigrette.', 32.99, 'Appetizers', 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600', NULL, false),
-  ('Midnight Tiramisu', 'Classic tiramisu with a dark chocolate twist and espresso foam.', 14.99, 'Dessert Platters', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600', NULL, true),
-  ('Gold Leaf Lobster', 'Charred Atlantic lobster with gold leaf, saffron beurre blanc.', 85.00, 'Signature', 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600', NULL, true),
-  ('A5 Wagyu Tasting', 'Japanese A5 Kobe seared tableside with truffle jus.', 120.00, 'Signature', 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600', NULL, true),
-  ('Black Truffle Risotto', 'Carnaroli risotto with black truffle and aged parmesan.', 65.00, 'Main', 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=600', NULL, true),
-  ('Gold Souffle', 'Grand Marnier souffle with gold dust and vanilla cream.', 35.00, 'Dessert', 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?w=600', NULL, true);
 
 -- Additional dishes with 3D models
 INSERT INTO dishes (name, description, price, category, image_url, model_url, poster_url, ios_src, is_available) VALUES
