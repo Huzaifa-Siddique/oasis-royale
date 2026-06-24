@@ -300,16 +300,87 @@ function AdminDashboardContent() {
                 onChange={(e) => setDateTo(e.target.value)}
                 className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs text-foreground focus:border-gold/30 focus:outline-none"
               />
-              <button
-                onClick={() => {
-                  const r = getTodayRange();
-                  setDateFrom(toDateInputValue(r.from));
-                  setDateTo(toDateInputValue(r.to));
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all cursor-pointer"
-              >
-                Today
-              </button>
+              {(() => {
+                const todayRange = getTodayRange();
+                const todayFrom = toDateInputValue(todayRange.from);
+                const todayTo = toDateInputValue(todayRange.to);
+                
+                const y = new Date();
+                y.setDate(y.getDate() - 1);
+                const yStr = toDateInputValue(y);
+                
+                const now = new Date();
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(now.getDate() - 6);
+                const sStr = toDateInputValue(sevenDaysAgo);
+                const nowStr = toDateInputValue(now);
+                
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(now.getDate() - 29);
+                const tStr = toDateInputValue(thirtyDaysAgo);
+
+                const isToday = dateFrom === todayFrom && dateTo === todayTo;
+                const isYesterday = dateFrom === yStr && dateTo === yStr;
+                const is7Days = dateFrom === sStr && dateTo === nowStr;
+                const is30Days = dateFrom === tStr && dateTo === nowStr;
+
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        setDateFrom(todayFrom);
+                        setDateTo(todayTo);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        isToday
+                          ? "bg-gold/20 text-gold border-gold/30"
+                          : "bg-white/5 text-foreground/60 border-white/5 hover:bg-white/10 hover:text-foreground"
+                      }`}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDateFrom(yStr);
+                        setDateTo(yStr);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        isYesterday
+                          ? "bg-gold/20 text-gold border-gold/30"
+                          : "bg-white/5 text-foreground/60 border-white/5 hover:bg-white/10 hover:text-foreground"
+                      }`}
+                    >
+                      Yesterday
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDateFrom(sStr);
+                        setDateTo(nowStr);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        is7Days
+                          ? "bg-gold/20 text-gold border-gold/30"
+                          : "bg-white/5 text-foreground/60 border-white/5 hover:bg-white/10 hover:text-foreground"
+                      }`}
+                    >
+                      7 Days
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDateFrom(tStr);
+                        setDateTo(nowStr);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        is30Days
+                          ? "bg-gold/20 text-gold border-gold/30"
+                          : "bg-white/5 text-foreground/60 border-white/5 hover:bg-white/10 hover:text-foreground"
+                      }`}
+                    >
+                      30 Days
+                    </button>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -784,3 +855,5 @@ export default function AdminDashboard() {
     </ProtectedRoute>
   );
 }
+
+
