@@ -72,10 +72,12 @@ export default function WastageSummary({ dateFrom, dateTo }: Props) {
     );
   }
 
-  if (!report || report.cancelledCount === 0) {
+  if (!report || (report as any).error || !report.total || report.cancelledCount === 0) {
     return (
       <GlassCard className="text-center py-8">
-        <p className="text-foreground/40 text-xs">No order wastage recorded for this period</p>
+        <p className="text-foreground/40 text-xs">
+          {(report as any).error || "No order wastage recorded for this period"}
+        </p>
       </GlassCard>
     );
   }

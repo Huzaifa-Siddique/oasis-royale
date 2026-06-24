@@ -95,7 +95,7 @@ function AdminDashboardContent() {
         const q = search.toLowerCase();
         return (
           String(o.order_short_id).includes(q) ||
-          o.table_id.toLowerCase().includes(q) ||
+          (o.table_id || "walk-in").toLowerCase().includes(q) ||
           (o.customer_name || "").toLowerCase().includes(q)
         );
       }

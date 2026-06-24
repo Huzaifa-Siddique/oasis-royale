@@ -237,7 +237,7 @@ function CounterContent() {
     return pendingOrders.filter(
       (o) =>
         o.order_short_id.toString().includes(term) ||
-        o.table_id.toLowerCase().includes(term)
+        (o.table_id || "walk-in").toLowerCase().includes(term)
     );
   }, [pendingOrders, pendingSearch]);
 
