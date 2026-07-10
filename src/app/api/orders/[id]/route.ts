@@ -232,9 +232,9 @@ export async function PATCH(
       estimated_minutes !== undefined &&
       oldEta !== null &&
       Math.abs(estimated_minutes - oldEta) >= 5 &&
-      current.customer_phone
+      currentOrder.customer_phone
     ) {
-      notifyEtaChange(auth.token!, current.customer_phone, oldEta, estimated_minutes).catch(() => {});
+      notifyEtaChange(auth.token!, currentOrder.customer_phone, oldEta, estimated_minutes).catch(() => {});
     }
 
     return Response.json(data, { status: 200 });
