@@ -905,7 +905,7 @@ function CounterContent() {
                       {order.customization_status === "proposed" && (
                         <div className="bg-gold/10 border border-gold/25 text-gold rounded-lg p-2 text-xs space-y-1">
                           <span className="font-semibold block text-[10px] uppercase">💬 Proposed Extra Charge:</span>
-                          <p className="text-[10px] text-foreground/80">Proposed: +{formatPrice(order.customization_charge)}</p>
+                          <p className="text-[10px] text-foreground/80">Proposed: +{formatPrice(order.customization_charge || 0)}</p>
                           {order.customization_notes && (
                             <p className="text-[10px] text-foreground/50 italic">"Note: {order.customization_notes}"</p>
                           )}
@@ -915,8 +915,8 @@ function CounterContent() {
                       {order.customization_status === "approved" && (
                         <div className="bg-green-500/10 border border-green-500/25 text-green-400 rounded-lg p-2 text-[10px] flex justify-between items-center">
                           <span>✓ Custom Request Approved</span>
-                          {order.customization_charge > 0 && (
-                            <span className="font-semibold font-mono">+{formatPrice(order.customization_charge)}</span>
+                          {(order.customization_charge || 0) > 0 && (
+                            <span className="font-semibold font-mono">+{formatPrice(order.customization_charge || 0)}</span>
                           )}
                         </div>
                       )}
