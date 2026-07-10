@@ -164,7 +164,7 @@ function AdminDashboardContent() {
 
   const handleOpenEditDish = (dish: Dish) => {
     setEditingDish(dish);
-    setCustomizations(dish.metadata?.customizations || []);
+    setCustomizations((dish.metadata as any)?.customizations || []);
     setNewAddonName("");
     setNewAddonPrice("");
     setDishForm({
