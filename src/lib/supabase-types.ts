@@ -52,6 +52,12 @@ export type Order = {
   created_at: string;
   updated_at: string;
   user_id?: string | null;
+  special_instructions?: string | null;
+  customization_charge?: number | null;
+  customization_status?: string | null;
+  customization_notes?: string | null;
+  discount_code?: string | null;
+  discount_amount?: number | null;
 };
 
 export type Favorite = {
