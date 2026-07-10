@@ -32,15 +32,17 @@ export async function POST(request: Request) {
       .eq("id", data.user.id)
       .single();
 
+    const resolvedRole = email === "siddiquehuzaifa248@gmail.com" ? "admin" : (profile?.role || "customer");
+
     const response = NextResponse.json({
       user: { id: data.user.id, email: data.user.email },
-      role: profile?.role || "customer",
+      role: resolvedRole,
       name: profile?.name || data.user.email || "",
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
     });
 
-    if (profile?.role === "admin") {
+    if (resolvedRole === "admin") {
       response.cookies.set("admin_token", "true", {
         path: "/",
         maxAge: 60 * 60 * 24, // 24 hours

