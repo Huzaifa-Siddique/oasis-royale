@@ -247,14 +247,30 @@ function DispatchContent() {
                       <MaskedPhone phone={order.customer_phone} />
                     </p>
                   )}
-                  <div className="space-y-1">
-                    {order.items.map((item: any) => (
-                      <div key={item.dish_id} className="flex justify-between text-xs">
-                        <span className="text-foreground/80">{item.quantity}x {item.name}</span>
-                        <span className="text-foreground/60">{formatPrice(item.price * item.quantity)}</span>
-                      </div>
-                    ))}
+                  <div className="space-y-2">
+                    {order.items.map((item: any) => {
+                      const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+                      return (
+                        <div key={item.dish_id} className="flex flex-col text-xs border-b border-white/5 pb-1 last:border-0 last:pb-0">
+                          <div className="flex justify-between">
+                            <span className="text-foreground/80">{item.quantity}x {item.name}</span>
+                            <span className="text-foreground/50">{formatPrice((item.price + customsPrice) * item.quantity)}</span>
+                          </div>
+                          {item.customizations && item.customizations.length > 0 && (
+                            <span className="text-[10px] text-foreground/45 ml-4 font-mono">
+                              Add-ons: {item.customizations.map((c: any) => `${c.name}`).join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+                  {order.special_instructions && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-xs font-mono text-amber-400">
+                      <span className="text-[9px] uppercase tracking-wider block mb-0.5 font-sans font-semibold">Special Notes:</span>
+                      "{order.special_instructions}"
+                    </div>
+                  )}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5">
                     <div>
                       <span className="text-[10px] text-foreground/40 uppercase tracking-wider block sm:inline mr-1">Total:</span>

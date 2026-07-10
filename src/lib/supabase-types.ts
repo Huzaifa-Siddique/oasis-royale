@@ -51,9 +51,18 @@ export type Order = {
   cancellation: OrderCancellation | null;
   created_at: string;
   updated_at: string;
+  user_id?: string | null;
+};
+
+export type Favorite = {
+  id: string;
+  user_id: string;
+  dish_id: string;
+  created_at: string;
 };
 
 export type Tables = {
   dishes: Dish;
   orders: Order;
+  favorites: Favorite;
 };

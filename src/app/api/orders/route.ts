@@ -3,6 +3,9 @@ import { authenticateRequest, requireRole } from "@/lib/api-auth";
 
 export async function POST(request: Request) {
   try {
+    const auth = await authenticateRequest(request);
+    const user_id = auth.user ? auth.user.id : null;
+
     const body = await request.json();
     const {
       session_id,
@@ -15,6 +18,9 @@ export async function POST(request: Request) {
       tags = [],
       priority = "normal",
       estimated_minutes,
+      special_instructions,
+      customization_status = "none",
+      discount_code,
     } = body;
 
     const supabase = getSupabaseClient();
@@ -23,12 +29,17 @@ export async function POST(request: Request) {
     }
     const { data: statusRow } = await supabase
       .from("restaurant_status")
-      .select("is_open")
+      .select("is_open, tax_rate, service_charge, discount_codes")
       .limit(1)
       .single();
+
     if (statusRow && !statusRow.is_open) {
       return Response.json({ error: "Restaurant is closed", code: "RESTAURANT_CLOSED" }, { status: 503 });
     }
+
+    const taxRate = statusRow?.tax_rate !== undefined ? Number(statusRow.tax_rate) : 8.25;
+    const serviceCharge = statusRow?.service_charge !== undefined ? Number(statusRow.service_charge) : 10.00;
+    const discountCodes = statusRow?.discount_codes || [];
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return Response.json({ error: "Items are required" }, { status: 400 });
@@ -68,39 +79,68 @@ export async function POST(request: Request) {
     }
 
     // --- Server-side price validation ---
-    // Fetch fresh dish prices and recalculate total
     const dishIds = items.map((item: { dish_id: string }) => item.dish_id);
     const { data: freshDishes } = await supabase
       .from("dishes")
-      .select("id, price, name")
+      .select("id, price, name, metadata")
       .in("id", dishIds);
 
     const dishMap = new Map((freshDishes || []).map((d) => [d.id, d]));
 
-    // Validate and rebuild items with server-side prices
-    const validatedItems = items.map((item: { dish_id: string; name?: string; quantity?: number; price?: number }) => {
+    // Validate and rebuild items with server-side prices and customizations
+    const validatedItems = items.map((item: any) => {
       const dish = dishMap.get(item.dish_id);
+      const dbCustomizations = dish?.metadata?.customizations || [];
+      
+      const validatedCustoms = (item.customizations || []).map((c: any) => {
+        const dbCustom = dbCustomizations.find((dc: any) => dc.name === c.name);
+        return {
+          name: c.name,
+          price: dbCustom?.price !== undefined ? Number(dbCustom.price) : 0,
+        };
+      });
+
       return {
         dish_id: item.dish_id,
         name: dish?.name ?? item.name ?? "Unknown",
         quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
         price: dish?.price ?? 0,
+        customizations: validatedCustoms
       };
     });
 
-    const calculatedTotal = validatedItems.reduce(
-      (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
+    const subtotal = validatedItems.reduce(
+      (sum: number, item: any) => {
+        const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+        return sum + (item.price + customsPrice) * item.quantity;
+      },
       0
     );
 
-    // Sanity check: total must be positive and within 10% of calculated total
-    if (calculatedTotal <= 0) {
+    if (subtotal <= 0) {
       return Response.json({ error: "Order total must be greater than zero" }, { status: 400 });
     }
-    if (Math.abs(total - calculatedTotal) > calculatedTotal * 0.1) {
-      // Client total doesn't match — use server-calculated total
-      // (This handles both malicious manipulation and stale cart prices)
+
+    // Handle discounts
+    let discountAmount = 0;
+    if (discount_code) {
+      const activeDiscount = discountCodes.find(
+        (dc: any) => dc.code.toUpperCase() === discount_code.toUpperCase()
+      );
+      if (activeDiscount) {
+        if (activeDiscount.type === "percent") {
+          discountAmount = subtotal * (Number(activeDiscount.value) / 100);
+        } else if (activeDiscount.type === "fixed") {
+          discountAmount = Number(activeDiscount.value);
+        }
+      }
     }
+    discountAmount = Math.min(discountAmount, subtotal);
+
+    const afterDiscount = Math.max(0, subtotal - discountAmount);
+    const taxAmount = afterDiscount * (taxRate / 100);
+    const serviceChargeAmount = afterDiscount * (serviceCharge / 100);
+    const grandTotal = afterDiscount + taxAmount + serviceChargeAmount;
 
     const { data, error } = await supabase
       .from("orders")
@@ -111,11 +151,17 @@ export async function POST(request: Request) {
         customer_phone: customer_phone || null,
         source,
         items: validatedItems,
-        total: calculatedTotal,
+        total: grandTotal,
         tags,
         priority,
         estimated_minutes: estimated_minutes || null,
         status: "pending",
+        user_id,
+        special_instructions: special_instructions || null,
+        customization_status: customization_status || "none",
+        customization_charge: 0.00,
+        discount_code: discount_code || null,
+        discount_amount: discountAmount
       })
       .select()
       .single();
@@ -125,8 +171,9 @@ export async function POST(request: Request) {
     }
 
     return Response.json(data, { status: 201 });
-  } catch {
-    return Response.json({ error: "Invalid request" }, { status: 400 });
+  } catch (err: any) {
+    console.error("Order API Error:", err);
+    return Response.json({ error: err.message || "Invalid request" }, { status: 400 });
   }
 }
 
@@ -134,7 +181,17 @@ export async function GET(request: Request) {
   const auth = await authenticateRequest(request);
   const url = new URL(request.url);
   const session_id = url.searchParams.get("session_id");
-  if (!(auth.user === null && session_id)) {
+  const user_id = url.searchParams.get("user_id");
+
+  if (auth.user && auth.profile?.role === "customer") {
+    // Customers can only see their own orders (by user_id or matching session_id)
+    if (user_id !== auth.user.id && !session_id) {
+      return Response.json({ error: "Access denied. Can only view own orders." }, { status: 403 });
+    }
+  } else if (!auth.user && session_id) {
+    // Guest accessing by session_id: allow
+  } else {
+    // Staff/Admin access check
     const authError = requireRole(auth, ["staff", "admin"]);
     if (authError) return authError;
   }
@@ -156,6 +213,11 @@ export async function GET(request: Request) {
   } else if (source) {
     query = query.eq("source", source);
   }
+  
+  if (user_id) {
+    query = query.eq("user_id", user_id);
+  }
+
   if (session_id) {
     query = query.eq("session_id", session_id);
   } else if (status) {

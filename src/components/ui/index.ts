@@ -6,4 +6,5 @@ export { default as GlassCard } from "./GlassCard";
 export { default as MenuCard } from "./MenuCard";
 export { default as HeatmapGrid } from "./HeatmapGrid";
 export { default as WastageSummary } from "./WastageSummary";
+export { Modal } from "./Modal";
 

@@ -41,6 +41,26 @@ export default function OrderPage() {
   const [kitchenWarning, setKitchenWarning] = useState(false);
   const [cancelCountdown, setCancelCountdown] = useState<number | null>(null);
 
+  // Customization & Calculation States
+  const [taxRate, setTaxRate] = useState(8.25);
+  const [serviceCharge, setServiceCharge] = useState(10.00);
+  const [discountCodes, setDiscountCodes] = useState<any[]>([]);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [discountError, setDiscountError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/restaurant-status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tax_rate !== undefined) setTaxRate(Number(data.tax_rate));
+        if (data.service_charge !== undefined) setServiceCharge(Number(data.service_charge));
+        if (data.discount_codes !== undefined) setDiscountCodes(data.discount_codes || []);
+      })
+      .catch(() => {});
+  }, []);
+
   const [idempotencyKey] = useState(() => {
     if (typeof window === "undefined") return "";
     const existing = sessionStorage.getItem("order_idempotency_key");
@@ -262,16 +282,39 @@ export default function OrderPage() {
         .map((item) => {
           const dish = dishMap.get(item.id);
           if (!dish) return null;
-          return { id: item.id, name: dish.name, price: dish.price, quantity: item.quantity };
+          return {
+            id: item.id,
+            name: dish.name,
+            price: dish.price,
+            quantity: item.quantity,
+            customizations: item.customizations || [],
+            uniqueKey: item.uniqueKey
+          };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null),
     [items, dishMap]
   );
 
-  const total = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems]
-  );
+  const subtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => {
+      const customsPrice = (item.customizations || []).reduce((s, c) => s + c.price, 0);
+      return sum + (item.price + customsPrice) * item.quantity;
+    }, 0);
+  }, [cartItems]);
+
+  const discountAmount = useMemo(() => {
+    if (!appliedDiscount) return 0;
+    if (appliedDiscount.type === "percent") {
+      return subtotal * (appliedDiscount.value / 100);
+    } else {
+      return appliedDiscount.value;
+    }
+  }, [subtotal, appliedDiscount]);
+
+  const afterDiscount = useMemo(() => Math.max(0, subtotal - discountAmount), [subtotal, discountAmount]);
+  const taxAmount = useMemo(() => afterDiscount * (taxRate / 100), [afterDiscount, taxRate]);
+  const serviceChargeAmount = useMemo(() => afterDiscount * (serviceCharge / 100), [afterDiscount, serviceCharge]);
+  const grandTotal = useMemo(() => afterDiscount + taxAmount + serviceChargeAmount, [afterDiscount, taxAmount, serviceChargeAmount]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -290,18 +333,23 @@ export default function OrderPage() {
 
       const orderItems = items.map((item) => {
         const dish = freshMap.get(item.id);
+        const dbCustomizations = dish?.metadata?.customizations || [];
+        const validatedCustoms = (item.customizations || []).map((c: any) => {
+          const dbCustom = dbCustomizations.find((dc: any) => dc.name === c.name);
+          return {
+            name: c.name,
+            price: dbCustom?.price !== undefined ? Number(dbCustom.price) : 0,
+          };
+        });
+
         return {
           dish_id: item.id,
           name: dish?.name ?? "Unknown",
           quantity: item.quantity,
           price: dish?.price ?? 0,
+          customizations: validatedCustoms,
         };
       });
-
-      const orderTotal = orderItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
 
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -315,7 +363,10 @@ export default function OrderPage() {
           table_id: tableId || "walk-in",
           customer_phone: phone || null,
           items: orderItems,
-          total: orderTotal,
+          total: grandTotal,
+          special_instructions: specialInstructions || null,
+          customization_status: specialInstructions ? "pending_approval" : "none",
+          discount_code: appliedDiscount?.code || null,
         }),
       });
 
@@ -349,16 +400,57 @@ export default function OrderPage() {
           <h1 className="font-heading text-2xl text-gold mb-2">Order Placed!</h1>
           <p className="text-foreground/60 mb-4">Order #{orderData?.order_short_id}</p>
 
-          <div className="border-t border-white/5 pt-4 mb-4 space-y-2">
-            {orderData?.items.map((item) => (
-              <div key={item.dish_id} className="flex justify-between text-sm">
-                <span className="text-foreground/80">{item.quantity}x {item.name}</span>
-                <span className="text-foreground/50">{formatPrice(item.price * item.quantity)}</span>
+          <div className="border-t border-white/5 pt-4 mb-4 space-y-3">
+            {orderData?.items.map((item: any) => {
+              const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+              return (
+                <div key={item.dish_id} className="flex flex-col text-sm border-b border-white/5 pb-2 last:border-0">
+                  <div className="flex justify-between">
+                    <span className="text-foreground/80">{item.quantity}x {item.name}</span>
+                    <span className="text-foreground/50">{formatPrice((item.price + customsPrice) * item.quantity)}</span>
+                  </div>
+                  {item.customizations && item.customizations.length > 0 && (
+                    <span className="text-[10px] text-foreground/45 mt-0.5 ml-4 font-mono">
+                      Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            
+            {orderData?.special_instructions && (
+              <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-2.5 my-3">
+                <span className="text-[9px] uppercase tracking-wider text-amber-400 font-heading block mb-0.5">Special Instructions</span>
+                <span className="text-xs text-foreground/70 font-mono">{orderData.special_instructions}</span>
+                {orderData?.customization_status === "pending_approval" && (
+                  <span className="block text-[10px] text-amber-300 italic mt-1">
+                    ⌛ Awaiting Counter Approval (Estimated: 1 min)
+                  </span>
+                )}
               </div>
-            ))}
-            <div className="flex justify-between font-heading text-base pt-2 border-t border-white/5">
-              <span className="text-foreground">Total</span>
-              <span className="text-gold">{formatPrice(orderData?.total || 0)}</span>
+            )}
+
+            <div className="space-y-1.5 pt-2 text-xs text-foreground/50">
+              {orderData?.discount_amount > 0 && (
+                <div className="flex justify-between text-green-400">
+                  <span>Discount</span>
+                  <span>-{formatPrice(orderData.discount_amount)}</span>
+                </div>
+              )}
+              {orderData?.customization_charge > 0 && (
+                <div className="flex justify-between text-gold">
+                  <span>Custom Request Fee</span>
+                  <span>+{formatPrice(orderData.customization_charge)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Taxes &amp; Fees</span>
+                <span>Included</span>
+              </div>
+              <div className="flex justify-between font-heading text-base pt-2 border-t border-white/5 text-foreground">
+                <span className="text-foreground">Total</span>
+                <span className="text-gold font-bold">{formatPrice(orderData?.total || 0)}</span>
+              </div>
             </div>
           </div>
 
@@ -488,14 +580,19 @@ export default function OrderPage() {
           <>
             <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
               {cartItems.map((item) => (
-                <GlassCard key={item.id} className="flex items-center gap-4">
+                <GlassCard key={item.uniqueKey} className="flex items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-sans font-medium text-foreground">{item.name}</h3>
                     <p className="text-gold text-sm mt-0.5">{formatPrice(item.price)}</p>
+                    {item.customizations && item.customizations.length > 0 && (
+                      <div className="text-[10px] text-foreground/40 mt-1 font-mono">
+                        Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.uniqueKey, item.quantity - 1)}
                       className="w-8 h-8 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
                       aria-label="Decrease quantity"
                     >
@@ -505,7 +602,7 @@ export default function OrderPage() {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.uniqueKey, item.quantity + 1)}
                       className="w-8 h-8 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
                       aria-label="Increase quantity"
                     >
@@ -513,10 +610,10 @@ export default function OrderPage() {
                     </button>
                   </div>
                   <p className="text-foreground font-medium w-20 text-right">
-                    {formatPrice(item.price * item.quantity)}
+                    {formatPrice((item.price + (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0)) * item.quantity)}
                   </p>
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.uniqueKey)}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-250 active:scale-90"
                     aria-label="Remove item"
                   >
@@ -540,10 +637,84 @@ export default function OrderPage() {
                 />
               </GlassCard>
 
-              <div className="sticky bottom-0 bg-[#050505] pt-4 pb-safe-nav z-10">
-                <GlassCard className="flex items-center justify-between">
-                  <span className="font-heading text-lg text-foreground">Total</span>
-                  <span className="font-heading text-xl text-gold">{formatPrice(total)}</span>
+              {/* Special Instructions Input */}
+              <GlassCard className="space-y-2">
+                <label className="text-xs text-foreground/50 block font-heading tracking-wider uppercase text-[10px]">
+                  Special Instructions / Custom Requests
+                </label>
+                <textarea
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value)}
+                  placeholder="Type customizations here (e.g. no onion, extra cheese). NOTE: custom text requests will require counter approval before checkout completes."
+                  className="w-full min-h-[60px] rounded-xl border border-white/10 bg-[#0A0A0A] p-3 text-xs text-foreground focus:border-gold/50 focus:outline-none transition-all placeholder:text-foreground/30 resize-none font-mono"
+                />
+              </GlassCard>
+
+              {/* Discount Code Input */}
+              <GlassCard className="space-y-2">
+                <label className="text-xs text-foreground/50 block font-heading tracking-wider uppercase text-[10px]">Discount Code</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountCodeInput}
+                    onChange={(e) => setDiscountCodeInput(e.target.value)}
+                    placeholder="ENTER CODE"
+                    className="flex-1 rounded-lg border border-white/10 bg-[#0A0A0A] px-3 py-2 text-xs text-foreground uppercase focus:border-gold/50 focus:outline-none placeholder:text-foreground/35 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountError("");
+                      if (!discountCodeInput.trim()) return;
+                      const code = discountCodeInput.trim().toUpperCase();
+                      const found = discountCodes.find(dc => dc.code === code);
+                      if (found) {
+                        setAppliedDiscount(found);
+                        toast.success(`Discount code "${code}" applied!`);
+                      } else {
+                        setDiscountError("Invalid discount code");
+                        setAppliedDiscount(null);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg bg-gold text-background hover:bg-gold/90 text-xs font-heading font-bold"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {appliedDiscount && (
+                  <p className="text-[10px] text-green-400 font-medium">
+                    ✓ Code "{appliedDiscount.code}" applied! ({appliedDiscount.type === "percent" ? `${appliedDiscount.value}% Off` : `$${appliedDiscount.value} Off`})
+                  </p>
+                )}
+                {discountError && (
+                  <p className="text-[10px] text-red-400 font-medium">✕ {discountError}</p>
+                )}
+              </GlassCard>
+
+              <div className="sticky bottom-0 bg-[#050505] pt-4 pb-safe-nav z-10 space-y-4">
+                <GlassCard className="space-y-2 text-xs text-foreground/60">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span className="text-foreground">{formatPrice(subtotal)}</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Tax ({taxRate.toFixed(2)}%)</span>
+                    <span className="text-foreground">{formatPrice(taxAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Service Charge ({serviceCharge.toFixed(2)}%)</span>
+                    <span className="text-foreground">{formatPrice(serviceChargeAmount)}</span>
+                  </div>
+                  <div className="flex justify-between font-heading text-base pt-2 border-t border-white/5 text-foreground">
+                    <span>Grand Total</span>
+                    <span className="text-gold font-bold">{formatPrice(grandTotal)}</span>
+                  </div>
                 </GlassCard>
 
                   {orderError && (

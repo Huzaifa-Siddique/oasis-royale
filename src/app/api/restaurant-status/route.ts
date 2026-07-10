@@ -6,7 +6,14 @@ export async function GET() {
   if (!supabase) return Response.json({ error: "Supabase not configured" }, { status: 500 });
   
   const { data } = await supabase.from("restaurant_status").select("*").limit(1).single();
-  return Response.json(data || { is_open: true });
+  const responseData = {
+    is_open: true,
+    tax_rate: 8.25,
+    service_charge: 10.00,
+    discount_codes: [],
+    ...data
+  };
+  return Response.json(responseData);
 }
 
 export async function POST(request: Request) {
@@ -28,13 +35,17 @@ export async function POST(request: Request) {
   if (!supabase) return Response.json({ error: "Supabase not configured" }, { status: 500 });
 
   const body = await request.json();
-  const { is_open } = body;
+  const { is_open, tax_rate, service_charge, discount_codes } = body;
 
   const updateData: Record<string, unknown> = {
-    is_open,
     updated_at: new Date().toISOString(),
     updated_by: auth.profile?.name || auth.profile?.email || "admin"
   };
+
+  if (is_open !== undefined) updateData.is_open = is_open;
+  if (tax_rate !== undefined) updateData.tax_rate = Number(tax_rate);
+  if (service_charge !== undefined) updateData.service_charge = Number(service_charge);
+  if (discount_codes !== undefined) updateData.discount_codes = discount_codes;
 
   // Get the existing row ID
   const { data: existing } = await supabase.from("restaurant_status").select("id").limit(1).single();
@@ -46,6 +57,25 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Database update error:", error);
+    // If it's a column not found error, try to update only the is_open column
+    if (error.code === "42703") {
+      const fallbackData: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+        updated_by: auth.profile?.name || auth.profile?.email || "admin"
+      };
+      if (is_open !== undefined) fallbackData.is_open = is_open;
+      const { data: fallbackResult, error: fallbackError } = await supabase
+        .from("restaurant_status")
+        .update(fallbackData)
+        .eq("id", existing?.id)
+        .select()
+        .single();
+      if (fallbackError) return Response.json({ error: fallbackError.message }, { status: 500 });
+      return Response.json(fallbackResult);
+    }
+    return Response.json({ error: error.message }, { status: 500 });
+  }
   return Response.json(data);
 }

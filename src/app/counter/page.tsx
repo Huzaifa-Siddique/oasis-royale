@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatPrice } from "@/lib/utils";
@@ -74,6 +75,55 @@ function CounterContent() {
   const [selectedEta, setSelectedEta] = useState<number>(15);
   const [cancelReason, setCancelReason] = useState<string>("customer_cancelled");
   const [customCancelReason, setCustomCancelReason] = useState<string>("");
+
+  // Customization Negotiation States
+  const [proposingCustomizationOrder, setProposingCustomizationOrder] = useState<Order | null>(null);
+  const [customizationChargeInput, setCustomizationChargeInput] = useState("");
+  const [customizationNotesInput, setCustomizationNotesInput] = useState("");
+
+  const handleApproveCustomizationFree = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeaders() },
+        body: JSON.stringify({
+          customization_status: "approved",
+          customization_charge: 0.00,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Customization approved for free!");
+        fetchPendingOrders();
+      }
+    } catch {
+      alert("Failed to approve customization");
+    }
+  };
+
+  const handleProposeCustomizationCharge = async () => {
+    if (!proposingCustomizationOrder) return;
+    const orderId = proposingCustomizationOrder.id;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeaders() },
+        body: JSON.stringify({
+          customization_status: "proposed",
+          customization_charge: Number(customizationChargeInput) || 0.00,
+          customization_notes: customizationNotesInput || null,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Extra charge proposal sent to customer!");
+        setProposingCustomizationOrder(null);
+        setCustomizationChargeInput("");
+        setCustomizationNotesInput("");
+        fetchPendingOrders();
+      }
+    } catch {
+      alert("Failed to propose customization charge");
+    }
+  };
 
   const handleConfirmPay = async () => {
     if (!activeActionOrder) return;
@@ -194,7 +244,12 @@ function CounterContent() {
           if (order.status === "pending" && order.source === "qr") {
             setPendingOrders((prev) => {
               if (prev.some((o) => o.id === order.id)) return prev;
-              playBeep(660, 0.3);
+              if (order.customization_status === "pending_approval") {
+                playBeep(880, 0.2);
+                setTimeout(() => playBeep(880, 0.4), 200);
+              } else {
+                playBeep(660, 0.3);
+              }
               return [order, ...prev];
             });
           }
@@ -206,6 +261,11 @@ function CounterContent() {
         (payload) => {
           const updated = payload.new as Order;
           setPendingOrders((prev) => {
+            const existing = prev.find((o) => o.id === updated.id);
+            if (updated.status === "pending" && updated.customization_status === "pending_approval" && existing?.customization_status !== "pending_approval") {
+              playBeep(880, 0.2);
+              setTimeout(() => playBeep(880, 0.4), 200);
+            }
             if (!prev.some((o) => o.id === updated.id)) {
               return (updated.status === "pending" && updated.source === "qr") ? [updated, ...prev] : prev;
             }
@@ -814,13 +874,70 @@ function CounterContent() {
                           ~{order.estimated_minutes || 15}m
                         </button>
                       )}
-                      <div className="space-y-1">
-                        {order.items.map((item: any) => (
-                          <div key={item.dish_id} className="flex justify-between text-xs">
-                            <span className="text-foreground/80">{item.quantity}x {item.name}</span>
-                            <span className="text-foreground/60">{formatPrice(item.price * item.quantity)}</span>
+                      {/* Customization negotiation panel badges */}
+                      {order.customization_status === "pending_approval" && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg p-2 text-xs space-y-1">
+                          <span className="font-semibold block text-[10px] uppercase">⌛ Custom Instructions Review:</span>
+                          <p className="font-mono bg-black/40 p-1.5 rounded text-[11px] text-foreground/90">{order.special_instructions}</p>
+                          {order.customization_notes && (
+                            <p className="text-[10px] text-amber-300/80 italic">Customer Reply: "{order.customization_notes}"</p>
+                          )}
+                          <div className="flex gap-1.5 pt-1">
+                            <button
+                              onClick={() => handleApproveCustomizationFree(order.id)}
+                              className="flex-1 py-1 rounded bg-green-500/25 border border-green-500/40 text-green-400 font-semibold text-[9px] uppercase cursor-pointer"
+                            >
+                              Approve Free
+                            </button>
+                            <button
+                              onClick={() => {
+                                setProposingCustomizationOrder(order);
+                                setCustomizationChargeInput("");
+                                setCustomizationNotesInput("");
+                              }}
+                              className="flex-1 py-1 rounded bg-gold/25 border border-gold/40 text-gold font-semibold text-[9px] uppercase cursor-pointer"
+                            >
+                              Charge Extra
+                            </button>
                           </div>
-                        ))}
+                        </div>
+                      )}
+                      {order.customization_status === "proposed" && (
+                        <div className="bg-gold/10 border border-gold/25 text-gold rounded-lg p-2 text-xs space-y-1">
+                          <span className="font-semibold block text-[10px] uppercase">💬 Proposed Extra Charge:</span>
+                          <p className="text-[10px] text-foreground/80">Proposed: +{formatPrice(order.customization_charge)}</p>
+                          {order.customization_notes && (
+                            <p className="text-[10px] text-foreground/50 italic">"Note: {order.customization_notes}"</p>
+                          )}
+                          <span className="block text-[9px] text-foreground/40 mt-1 animate-pulse">⌛ Awaiting customer acceptance...</span>
+                        </div>
+                      )}
+                      {order.customization_status === "approved" && (
+                        <div className="bg-green-500/10 border border-green-500/25 text-green-400 rounded-lg p-2 text-[10px] flex justify-between items-center">
+                          <span>✓ Custom Request Approved</span>
+                          {order.customization_charge > 0 && (
+                            <span className="font-semibold font-mono">+{formatPrice(order.customization_charge)}</span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="space-y-1 pt-1.5">
+                        {order.items.map((item: any) => {
+                          const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+                          return (
+                            <div key={item.dish_id} className="flex flex-col text-xs border-b border-white/5 pb-1 last:border-0 last:pb-0">
+                              <div className="flex justify-between">
+                                <span className="text-foreground/80">{item.quantity}x {item.name}</span>
+                                <span className="text-foreground/60">{formatPrice((item.price + customsPrice) * item.quantity)}</span>
+                              </div>
+                              {item.customizations && item.customizations.length > 0 && (
+                                <span className="text-[9px] text-foreground/45 ml-4 font-mono">
+                                  Add-ons: {item.customizations.map((c: any) => `${c.name}`).join(", ")}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-white/5 gap-2">
                         <span className="font-heading text-base text-gold shrink-0">{formatPrice(order.total)}</span>
@@ -986,6 +1103,69 @@ function CounterContent() {
                   className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-heading hover:bg-red-700 transition-colors"
                 >
                   Confirm Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Proposing Customization Charge */}
+      {proposingCustomizationOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#111111]">
+              <h3 className="font-heading text-lg text-gold">Propose Custom Request Charge</h3>
+              <button onClick={() => setProposingCustomizationOrder(null)} className="text-foreground/40 hover:text-foreground">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-foreground/80">
+                Order <strong className="text-gold">#{proposingCustomizationOrder.order_short_id}</strong> requested customization:
+              </p>
+              <div className="bg-black/40 p-3 rounded-lg text-xs font-mono text-foreground/70">
+                "{proposingCustomizationOrder.special_instructions}"
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-foreground/40 block">Propose Additional Charge (Subtotal):</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-gold font-bold text-sm">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="3.00"
+                    value={customizationChargeInput}
+                    onChange={(e) => setCustomizationChargeInput(e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground focus:border-gold/50 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-foreground/40 block">Reply Notes / Explanation to Customer:</label>
+                <textarea
+                  placeholder="e.g. Extra $3.00 for double beef patty and extra cheese."
+                  value={customizationNotesInput}
+                  onChange={(e) => setCustomizationNotesInput(e.target.value)}
+                  className="w-full h-20 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-foreground placeholder:text-foreground/30 focus:border-gold/50 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setProposingCustomizationOrder(null)}
+                  className="flex-1 py-2.5 rounded-lg border border-white/10 text-foreground/70 text-sm font-heading hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+                <button
+                  type="button"
+                  onClick={handleProposeCustomizationCharge}
+                  className="flex-1 py-2.5 rounded-lg bg-gold text-background text-sm font-heading font-bold hover:bg-gold/90 transition-colors cursor-pointer"
+                >
+                  Send Proposal
                 </button>
               </div>
             </div>

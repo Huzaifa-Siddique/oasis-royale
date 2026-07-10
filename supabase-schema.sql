@@ -180,3 +180,23 @@ ON CONFLICT DO NOTHING;
 -- REALTIME: Enable realtime on orders table
 -- =====================================================
 ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+
+-- =====================================================
+-- MIGRATION: Premium Customizations, Negotiation & Tax Settings
+-- =====================================================
+
+-- Add customization columns to orders
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS special_instructions text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customization_charge numeric(10, 2) DEFAULT 0.00;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customization_status text DEFAULT 'none' CHECK (customization_status IN ('none', 'pending_approval', 'proposed', 'approved', 'rejected'));
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customization_notes text;
+
+-- Add discount code tracking to orders
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount numeric(10, 2) DEFAULT 0.00;
+
+-- Add tax, service charges, and discount configuration to restaurant_status
+ALTER TABLE restaurant_status ADD COLUMN IF NOT EXISTS tax_rate numeric(5, 2) DEFAULT 8.25;
+ALTER TABLE restaurant_status ADD COLUMN IF NOT EXISTS service_charge numeric(5, 2) DEFAULT 10.00;
+ALTER TABLE restaurant_status ADD COLUMN IF NOT EXISTS discount_codes jsonb DEFAULT '[]';
+

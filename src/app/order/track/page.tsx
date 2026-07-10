@@ -100,6 +100,8 @@ export default function TrackPage() {
   const [manualLoading, setManualLoading] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [cancelCountdown, setCancelCountdown] = useState<number | null>(null);
+  const [replyInput, setReplyInput] = useState("");
+  const [negotiationLoading, setNegotiationLoading] = useState(false);
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
@@ -127,6 +129,84 @@ export default function TrackPage() {
       setLoading(false);
     }
   }, [activeSessionId]);
+
+  const handleAcceptProposal = async () => {
+    setNegotiationLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customization_status: "approved",
+          session_id: activeSessionId,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setOrder(updated);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to accept proposal");
+      }
+    } catch {
+      alert("Network error");
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleReplyBack = async () => {
+    if (!replyInput.trim()) return;
+    setNegotiationLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customization_status: "pending_approval",
+          customization_notes: replyInput,
+          session_id: activeSessionId,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setOrder(updated);
+        setReplyInput("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to send message");
+      }
+    } catch {
+      alert("Network error");
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (reason = "Customer cancelled order") => {
+    setNegotiationLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSessionId,
+          reason,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setOrder(updated);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to cancel order");
+      }
+    } catch {
+      alert("Network error");
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrder();
@@ -286,6 +366,12 @@ export default function TrackPage() {
   const isReady = status === "ready" || status === "completed";
   const isCompleted = status === "completed";
 
+  // Recalculate Subtotal from items
+  const subtotal = (order.items || []).reduce((sum: number, item: any) => {
+    const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+    return sum + (item.price + customsPrice) * item.quantity;
+  }, 0);
+
   return (
     <main className="min-h-screen pt-28 sm:pt-32">
       <div className="max-w-2xl mx-auto px-6 py-6 sm:py-12">
@@ -296,32 +382,126 @@ export default function TrackPage() {
 
         <StatusStepper currentStatus={status} />
 
+        {/* Customization negotiation panel */}
+        {status === "pending" && order.customization_status === "pending_approval" && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 mb-6 text-center space-y-3">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 text-sm animate-spin mb-1">
+              ⌛
+            </span>
+            <h3 className="text-amber-400 font-heading text-sm font-semibold uppercase tracking-wider">Reviewing Custom Request</h3>
+            <p className="text-foreground/70 text-xs leading-relaxed max-w-md mx-auto">
+              Our counter staff is reviewing your special instructions. An estimated wait time is <strong className="text-gold">1 minute</strong>.
+            </p>
+            {order.special_instructions && (
+              <div className="bg-black/30 border border-white/5 rounded-lg p-3 text-left font-mono text-xs text-foreground/80 max-w-md mx-auto">
+                <span className="text-[10px] text-foreground/45 block mb-1 uppercase">Instructions:</span>
+                "{order.special_instructions}"
+              </div>
+            )}
+            {order.customization_notes && (
+              <div className="bg-black/40 border border-amber-500/20 rounded-lg p-3 text-left text-xs text-amber-300/90 max-w-md mx-auto">
+                <span className="text-[10px] text-amber-400 block mb-1 uppercase font-semibold">Latest Note:</span>
+                "{order.customization_notes}"
+              </div>
+            )}
+            
+            <div className="pt-2 max-w-md mx-auto space-y-3">
+              <textarea
+                value={replyInput}
+                onChange={(e) => setReplyInput(e.target.value)}
+                placeholder="Type reply or update request details..."
+                className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-gold/50 placeholder:text-foreground/30 resize-none h-14 font-mono"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleReplyBack}
+                  disabled={negotiationLoading || !replyInput.trim()}
+                  className="flex-1 py-2 rounded-lg bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 text-xs font-semibold font-heading uppercase transition-all cursor-pointer"
+                >
+                  Send Reply
+                </button>
+                <button
+                  onClick={() => handleCancelOrder("Customer cancelled during review")}
+                  disabled={negotiationLoading}
+                  className="flex-1 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 text-xs font-semibold font-heading uppercase transition-all cursor-pointer"
+                >
+                  Cancel Order
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {status === "pending" && order.customization_status === "proposed" && (
+          <div className="bg-gold/10 border border-gold/30 rounded-xl p-5 mb-6 space-y-4">
+            <div className="text-center">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gold/20 text-gold text-lg mb-1">
+                💬
+              </span>
+              <h3 className="text-gold font-heading text-sm font-semibold uppercase tracking-wider">Proposal Received</h3>
+              <p className="text-foreground/80 text-xs mt-1 leading-relaxed">
+                The counter proposed a customization charge of <strong className="text-gold text-sm">{formatPrice(order.customization_charge)}</strong> for your request.
+              </p>
+            </div>
+
+            {order.customization_notes && (
+              <div className="bg-black/40 border border-gold/20 rounded-lg p-3.5 text-left text-xs text-foreground/85 font-sans leading-relaxed max-w-md mx-auto">
+                <span className="text-[10px] text-gold block mb-1 uppercase font-heading tracking-wider">Staff Message:</span>
+                "{order.customization_notes}"
+              </div>
+            )}
+
+            <div className="max-w-md mx-auto space-y-3 pt-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAcceptProposal}
+                  disabled={negotiationLoading}
+                  className="flex-1 py-2.5 rounded-lg bg-gold text-background hover:bg-gold/90 text-xs font-bold font-heading uppercase transition-all cursor-pointer"
+                >
+                  Proceed (+{formatPrice(order.customization_charge)})
+                </button>
+                <button
+                  onClick={() => handleCancelOrder("Customer rejected proposed charges")}
+                  disabled={negotiationLoading}
+                  className="flex-1 py-2.5 rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 text-xs font-semibold font-heading uppercase transition-all cursor-pointer"
+                >
+                  Cancel Order
+                </button>
+              </div>
+
+              <div className="border-t border-white/5 pt-3 space-y-2">
+                <label className="text-[10px] uppercase tracking-wider text-foreground/45 block">Counter-Propose / Reply</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={replyInput}
+                    onChange={(e) => setReplyInput(e.target.value)}
+                    placeholder="Ask for alternative or say okay..."
+                    className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold/50"
+                  />
+                  <button
+                    onClick={handleReplyBack}
+                    disabled={negotiationLoading || !replyInput.trim()}
+                    className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-foreground/80 hover:bg-white/10 text-xs font-heading font-semibold cursor-pointer"
+                  >
+                    Reply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Status messages */}
         <div className="text-center mb-8">
-            {status === "pending" && (
+            {status === "pending" && order.customization_status !== "pending_approval" && order.customization_status !== "proposed" && (
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
                 <p className="text-amber-400 font-medium">Awaiting Payment</p>
                 <p className="text-foreground/50 text-sm mt-1">Please pay at the counter to start processing your order.</p>
                 {cancelCountdown !== null && (
                   <button
-                    onClick={async () => {
-                      try {
-                        const sessionId = localStorage.getItem("oasis_order_session_id");
-                        if (!sessionId) return;
-                        const res = await fetch(`/api/orders/${order.id}/cancel`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ session_id: sessionId }),
-                        });
-                        if (!res.ok) {
-                          const err = await res.json();
-                          alert(err.error || "Failed to cancel order");
-                        }
-                      } catch {
-                        alert("Network error");
-                      }
-                    }}
-                    className="mt-3 w-full px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors"
+                    onClick={() => handleCancelOrder("Customer cancelled order")}
+                    className="mt-3 w-full px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors cursor-pointer"
                   >
                     Cancel Order ({cancelCountdown}s)
                   </button>
@@ -340,7 +520,7 @@ export default function TrackPage() {
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center justify-center gap-1">
                   <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-heading">Estimated Prep Time</span>
                   <span className="text-2xl font-heading text-gold">~{order.estimated_minutes} Minutes</span>
-                  <span className="text-[10px] text-foreground/30 text-center">Our kitchen chefs are on it! We will notify you when it's ready.</span>
+                  <span className="text-[10px] text-foreground/30 text-center"> Our kitchen chefs are on it! We will notify you when it's ready.</span>
                 </div>
               )}
             </div>
@@ -368,18 +548,51 @@ export default function TrackPage() {
         </div>
 
         {/* Order items */}
-        <GlassCard className="space-y-3 !p-4">
-          <div className="space-y-2">
-            {order.items.map((item: any) => (
-              <div key={item.dish_id} className="flex justify-between text-sm">
-                <span className="text-foreground/80">{item.quantity}x {item.name}</span>
-                <span className="text-foreground/50">{formatPrice(item.price * item.quantity)}</span>
-              </div>
-            ))}
+        <GlassCard className="space-y-4 !p-4">
+          <div className="space-y-3">
+            {order.items.map((item: any) => {
+              const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+              return (
+                <div key={item.dish_id} className="flex flex-col text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                  <div className="flex justify-between">
+                    <span className="text-foreground/80">{item.quantity}x {item.name}</span>
+                    <span className="text-foreground/50">{formatPrice((item.price + customsPrice) * item.quantity)}</span>
+                  </div>
+                  {item.customizations && item.customizations.length > 0 && (
+                    <span className="text-[10px] text-foreground/45 mt-0.5 ml-4 font-mono">
+                      Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div className="flex justify-between font-heading text-base pt-3 border-t border-white/5">
-            <span className="text-foreground">Total</span>
-            <span className="text-gold">{formatPrice(order.total)}</span>
+
+          <div className="space-y-1.5 pt-3 border-t border-white/5 text-xs text-foreground/50">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span className="text-foreground">{formatPrice(subtotal)}</span>
+            </div>
+            {order.discount_amount > 0 && (
+              <div className="flex justify-between text-green-400">
+                <span>Discount</span>
+                <span>-{formatPrice(order.discount_amount)}</span>
+              </div>
+            )}
+            {order.customization_charge > 0 && (
+              <div className="flex justify-between text-gold">
+                <span>Custom Request Charge</span>
+                <span>+{formatPrice(order.customization_charge)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Taxes &amp; Fees</span>
+              <span>Included</span>
+            </div>
+            <div className="flex justify-between font-heading text-base pt-2 border-t border-white/5 text-foreground">
+              <span>Total Amount</span>
+              <span className="text-gold font-bold">{formatPrice(order.total)}</span>
+            </div>
           </div>
         </GlassCard>
 

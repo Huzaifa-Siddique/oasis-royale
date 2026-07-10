@@ -17,12 +17,18 @@ export async function PATCH(
 ) {
   try {
     const auth = await authenticateRequest(request);
-    const authError = requireRole(auth, ["staff", "admin"]);
-    if (authError) return authError;
-
     const { id } = await params;
     const body = await request.json();
-    const { status, cancellation, estimated_minutes, estimated_minutes_set_by } = body;
+    const {
+      status,
+      cancellation,
+      estimated_minutes,
+      estimated_minutes_set_by,
+      customization_status,
+      customization_charge,
+      customization_notes,
+      session_id
+    } = body;
 
     if (status && !ALLOWED_STATUSES.includes(status)) {
       return Response.json({ error: "Invalid status" }, { status: 400 });
@@ -36,37 +42,51 @@ export async function PATCH(
       }
     }
 
-    const supabase = getSupabaseAuthClient(auth.token!);
+    const supabase = getSupabaseClient();
     if (!supabase) {
       return Response.json({ error: "Supabase not configured" }, { status: 500 });
     }
 
-    // --- Fetch current order (needed for ETA validation & eta_changes append) ---
-    let currentSelect = await supabase
+    // Fetch current order to check owner and customizations
+    const { data: currentOrder, error: fetchErr } = await supabase
       .from("orders")
-      .select("status, estimated_minutes, eta_changes, customer_phone")
+      .select("status, user_id, session_id, estimated_minutes, eta_changes, customer_phone, customization_status, customization_charge, total, items, discount_amount")
       .eq("id", id)
       .single();
 
+    if (fetchErr || !currentOrder) {
+      return Response.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const isStaffOrAdmin = auth.profile?.role === "staff" || auth.profile?.role === "admin";
+    const isOwner = (auth.user && auth.user.id === currentOrder.user_id) || (session_id && session_id === currentOrder.session_id);
+
+    if (!isStaffOrAdmin && !isOwner) {
+      return Response.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // Security check: Customer can only modify customization acceptance, notes or cancellation
+    if (!isStaffOrAdmin) {
+      if (estimated_minutes !== undefined || estimated_minutes_set_by !== undefined || customization_charge !== undefined) {
+        return Response.json({ error: "Unauthorized changes" }, { status: 403 });
+      }
+      if (status && status !== "cancelled") {
+        return Response.json({ error: "Unauthorized status transition" }, { status: 403 });
+      }
+    }
+
+    const activeSupabase = auth.token ? getSupabaseAuthClient(auth.token) : supabase;
+
+    // --- Fetch current order columns for ETA ---
     let hasEtaChangesColumn = true;
-    if (currentSelect.error?.message?.includes('column "eta_changes" does not exist')) {
+    // Check if eta_changes exists in currentOrder (was fetched in currentOrder select)
+    if (!("eta_changes" in currentOrder)) {
       hasEtaChangesColumn = false;
-      currentSelect = await supabase
-        .from("orders")
-        .select("status, estimated_minutes, customer_phone")
-        .eq("id", id)
-        .single();
     }
-
-    if (currentSelect.error || !currentSelect.data) {
-      return Response.json({ error: currentSelect.error?.message ?? "Order not found" }, { status: 404 });
-    }
-
-    const current = currentSelect.data;
 
     // --- Validate kitchen can only INCREASE ETA ---
     const setBy = estimated_minutes_set_by || auth.profile?.name || auth.user?.email || "unknown";
-    const oldEta = current.estimated_minutes;
+    const oldEta = currentOrder.estimated_minutes;
     if (estimated_minutes !== undefined && estimated_minutes !== null) {
       if (oldEta !== null && estimated_minutes < oldEta) {
         return Response.json(
@@ -77,11 +97,11 @@ export async function PATCH(
     }
 
     // --- State machine validation (only when status is changing) ---
-    if (status && status !== current.status) {
-      const allowed = VALID_TRANSITIONS[current.status];
+    if (status && status !== currentOrder.status) {
+      const allowed = VALID_TRANSITIONS[currentOrder.status];
       if (!allowed || !allowed.includes(status)) {
         return Response.json(
-          { error: `Cannot transition from "${current.status}" to "${status}"` },
+          { error: `Cannot transition from "${currentOrder.status}" to "${status}"` },
           { status: 409 }
         );
       }
@@ -96,11 +116,46 @@ export async function PATCH(
       updateData.status = status;
     }
 
-    // Graceful status_changed_at: try with column, catch column-not-found later
     updateData.status_changed_at = now;
 
     if (cancellation) {
       updateData.cancellation = cancellation;
+    }
+
+    if (customization_status !== undefined) {
+      updateData.customization_status = customization_status;
+    }
+
+    if (customization_charge !== undefined && isStaffOrAdmin) {
+      updateData.customization_charge = Number(customization_charge);
+    }
+
+    if (customization_notes !== undefined) {
+      updateData.customization_notes = customization_notes;
+    }
+
+    // Automatically recalculate grand total if customer accepts/approves proposed customization charge
+    if (customization_status === "approved" && currentOrder.customization_status === "proposed") {
+      const { data: statusRow } = await supabase
+        .from("restaurant_status")
+        .select("tax_rate, service_charge")
+        .limit(1)
+        .single();
+      const taxRate = statusRow?.tax_rate !== undefined ? Number(statusRow.tax_rate) : 8.25;
+      const serviceCharge = statusRow?.service_charge !== undefined ? Number(statusRow.service_charge) : 10.00;
+
+      const subtotal = (currentOrder.items as any[]).reduce(
+        (sum: number, item: any) => {
+          const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+          return sum + (item.price + customsPrice) * item.quantity;
+        },
+        0
+      );
+      const afterDiscount = Math.max(0, subtotal - (currentOrder.discount_amount || 0));
+      const finalSubtotal = afterDiscount + Number(currentOrder.customization_charge);
+      const taxAmount = finalSubtotal * (taxRate / 100);
+      const serviceChargeAmount = finalSubtotal * (serviceCharge / 100);
+      updateData.total = finalSubtotal + taxAmount + serviceChargeAmount;
     }
 
     // --- Handle ETA changes ---
@@ -110,11 +165,11 @@ export async function PATCH(
 
       if (hasEtaChangesColumn) {
         let etaChanges: Array<{ from: number | null; to: number; set_by: string; changed_at: string }> = [];
-        if (current.eta_changes) {
+        if ((currentOrder as any).eta_changes) {
           try {
-            etaChanges = typeof current.eta_changes === "string"
-              ? JSON.parse(current.eta_changes)
-              : current.eta_changes;
+            etaChanges = typeof (currentOrder as any).eta_changes === "string"
+              ? JSON.parse((currentOrder as any).eta_changes)
+              : (currentOrder as any).eta_changes;
           } catch {
             etaChanges = [];
           }
@@ -135,7 +190,7 @@ export async function PATCH(
     }
 
     // --- Execute update (with column-not-found fallback) ---
-    let { data, error } = await supabase
+    let { data, error } = await activeSupabase
       .from("orders")
       .update(updateData)
       .eq("id", id)
@@ -145,7 +200,7 @@ export async function PATCH(
     // Graceful degradation: if eta_changes column is missing, retry without it
     if (error?.message?.includes('column "eta_changes" does not exist')) {
       delete updateData.eta_changes;
-      const result = await supabase
+      const result = await activeSupabase
         .from("orders")
         .update(updateData)
         .eq("id", id)
@@ -158,7 +213,7 @@ export async function PATCH(
     // Graceful degradation: if status_changed_at column is missing, retry without it
     if (error?.message?.includes('column "status_changed_at" does not exist')) {
       delete updateData.status_changed_at;
-      const result = await supabase
+      const result = await activeSupabase
         .from("orders")
         .update(updateData)
         .eq("id", id)

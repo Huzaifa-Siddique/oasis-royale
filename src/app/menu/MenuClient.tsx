@@ -9,8 +9,10 @@ import { authHeaders } from "@/lib/api-fetch";
 import { toast } from "sonner";
 import { arSingleton } from "@/lib/ar-singleton";
 import { formatPrice, cn } from "@/lib/utils";
-import { ShoppingCart, Minus, Plus, Trash2, X, Smartphone, AlertCircle, Sparkles } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, X, Smartphone, AlertCircle, Sparkles, Heart } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { Modal } from "@/components/ui";
 
 export default function MenuClient() {
   const [dishes, setDishes] = useState<Dish[]>([]);
@@ -20,6 +22,11 @@ export default function MenuClient() {
   const [retryCount, setRetryCount] = useState(0);
   const { items, addItem, updateQuantity, removeItem, clearCart, getCount } = useCart();
   const categoryRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const { user } = useAuth();
+
+  // Favorites States
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Drawer States
   const [cartOpen, setCartOpen] = useState(false);
@@ -30,6 +37,28 @@ export default function MenuClient() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [kitchenWarning, setKitchenWarning] = useState(false);
   const [tableId, setTableId] = useState("");
+
+  // Customization & Calculation States
+  const [customizingDish, setCustomizingDish] = useState<Dish | null>(null);
+  const [selectedCustoms, setSelectedCustoms] = useState<Array<{ name: string; price: number }>>([]);
+  const [taxRate, setTaxRate] = useState(8.25);
+  const [serviceCharge, setServiceCharge] = useState(10.00);
+  const [discountCodes, setDiscountCodes] = useState<any[]>([]);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [discountError, setDiscountError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/restaurant-status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tax_rate !== undefined) setTaxRate(Number(data.tax_rate));
+        if (data.service_charge !== undefined) setServiceCharge(Number(data.service_charge));
+        if (data.discount_codes !== undefined) setDiscountCodes(data.discount_codes || []);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchDishes = useCallback(async () => {
     setLoading(true);
@@ -49,6 +78,69 @@ export default function MenuClient() {
   useEffect(() => {
     fetchDishes();
   }, [fetchDishes]);
+
+  const fetchFavorites = useCallback(async () => {
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+    try {
+      const res = await fetch("/api/favorites", { headers: { ...authHeaders() } });
+      if (res.ok) {
+        const data = await res.json();
+        setFavorites((data || []).map((fav: any) => fav.dish_id));
+      }
+    } catch (e) {
+      console.error("Error fetching favorites:", e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const handleToggleFavorite = useCallback(async (dishId: string) => {
+    if (!user) {
+      toast.error("Please sign in to favorite dishes");
+      return;
+    }
+    
+    const isFav = favorites.includes(dishId);
+    try {
+      if (isFav) {
+        setFavorites((prev) => prev.filter((id) => id !== dishId));
+        const res = await fetch(`/api/favorites?dish_id=${dishId}`, {
+          method: "DELETE",
+          headers: { ...authHeaders() },
+        });
+        if (!res.ok) {
+          setFavorites((prev) => [...prev, dishId]);
+          toast.error("Failed to remove from favorites");
+        } else {
+          toast.success("Removed from favorites");
+        }
+      } else {
+        setFavorites((prev) => [...prev, dishId]);
+        const res = await fetch("/api/favorites", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify({ dish_id: dishId }),
+        });
+        if (!res.ok) {
+          setFavorites((prev) => prev.filter((id) => id !== dishId));
+          toast.error("Failed to add to favorites");
+        } else {
+          toast.success("Added to favorites!");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update favorites");
+    }
+  }, [user, favorites]);
 
   // Load table ID from localStorage/cookie (prioritize cookie updated by QR scan redirect)
   useEffect(() => {
@@ -72,13 +164,17 @@ export default function MenuClient() {
   }, []);
 
   const groupedDishes = useMemo(() => {
-    return dishes.reduce<Record<string, Dish[]>>((acc, dish) => {
+    const filtered = showFavoritesOnly
+      ? dishes.filter((d) => favorites.includes(d.id))
+      : dishes;
+
+    return filtered.reduce<Record<string, Dish[]>>((acc, dish) => {
       const category = dish.category || "Other";
       if (!acc[category]) acc[category] = [];
       acc[category].push(dish);
       return acc;
     }, {});
-  }, [dishes]);
+  }, [dishes, favorites, showFavoritesOnly]);
 
   const categories = useMemo(() => Object.keys(groupedDishes), [groupedDishes]);
 
@@ -125,8 +221,14 @@ export default function MenuClient() {
 
   const handleOrder = useCallback(
     (dish: Dish) => {
-      addItem(dish.id);
-      toast.success(`Added ${dish.name} to order`);
+      const addons = dish.metadata?.customizations || [];
+      if (addons.length > 0) {
+        setCustomizingDish(dish);
+        setSelectedCustoms([]);
+      } else {
+        addItem(dish.id);
+        toast.success(`Added ${dish.name} to order`);
+      }
     },
     [addItem]
   );
@@ -143,15 +245,39 @@ export default function MenuClient() {
       .map((item) => {
         const dish = dishMap.get(item.id);
         if (!dish) return null;
-        return { id: item.id, name: dish.name, price: dish.price, quantity: item.quantity };
+        return {
+          id: item.id,
+          name: dish.name,
+          price: dish.price,
+          quantity: item.quantity,
+          customizations: item.customizations || [],
+          uniqueKey: item.uniqueKey
+        };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
   }, [items, dishMap]);
 
   const cartCount = useMemo(() => getCount(), [getCount]);
-  const total = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => {
+      const customsPrice = (item.customizations || []).reduce((s: number, c: any) => s + c.price, 0);
+      return sum + (item.price + customsPrice) * item.quantity;
+    }, 0);
   }, [cartItems]);
+
+  const discountAmount = useMemo(() => {
+    if (!appliedDiscount) return 0;
+    if (appliedDiscount.type === "percent") {
+      return subtotal * (appliedDiscount.value / 100);
+    } else {
+      return appliedDiscount.value;
+    }
+  }, [subtotal, appliedDiscount]);
+
+  const afterDiscount = useMemo(() => Math.max(0, subtotal - discountAmount), [subtotal, discountAmount]);
+  const taxAmount = useMemo(() => afterDiscount * (taxRate / 100), [afterDiscount, taxRate]);
+  const serviceChargeAmount = useMemo(() => afterDiscount * (serviceCharge / 100), [afterDiscount, serviceCharge]);
+  const grandTotal = useMemo(() => afterDiscount + taxAmount + serviceChargeAmount, [afterDiscount, taxAmount, serviceChargeAmount]);
 
   const handleCheckout = async () => {
     if (isSubmitting) return;
@@ -165,11 +291,21 @@ export default function MenuClient() {
     try {
       const orderItems = items.map((item) => {
         const dish = dishMap.get(item.id);
+        const dbCustomizations = dish?.metadata?.customizations || [];
+        const validatedCustoms = (item.customizations || []).map((c: any) => {
+          const dbCustom = dbCustomizations.find((dc: any) => dc.name === c.name);
+          return {
+            name: c.name,
+            price: dbCustom?.price !== undefined ? Number(dbCustom.price) : 0,
+          };
+        });
+
         return {
           dish_id: item.id,
           name: dish?.name ?? "Unknown",
           quantity: item.quantity,
           price: dish?.price ?? 0,
+          customizations: validatedCustoms,
         };
       });
 
@@ -185,7 +321,10 @@ export default function MenuClient() {
           table_id: tableId || "walk-in",
           customer_phone: phone || null,
           items: orderItems,
-          total: total,
+          total: grandTotal,
+          special_instructions: specialInstructions || null,
+          customization_status: specialInstructions ? "pending_approval" : "none",
+          discount_code: appliedDiscount?.code || null,
         }),
       });
 
@@ -253,12 +392,29 @@ export default function MenuClient() {
               ref={categoryBarRef}
               className="sticky top-0 z-30 -mx-6 px-6 py-3 mb-8 backdrop-blur-xl bg-[#050505]/80 border-b border-white/5 overflow-x-auto scrollbar-hide"
             >
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                {user && (
+                  <button
+                    onClick={() => {
+                      arSingleton.detach();
+                      setShowFavoritesOnly(!showFavoritesOnly);
+                    }}
+                    className={cn(
+                      "shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer",
+                      showFavoritesOnly
+                        ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                        : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
+                    )}
+                  >
+                    <Heart className={cn("w-3.5 h-3.5", showFavoritesOnly ? "fill-red-400 text-red-400" : "text-foreground/50")} />
+                    Favorites ({favorites.length})
+                  </button>
+                )}
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => scrollToCategory(cat)}
-                    className={`shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                    className={`shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       activeCategory === cat
                         ? "bg-gold/20 text-gold border border-gold/30"
                         : "bg-white/5 text-foreground/50 border border-white/5 hover:bg-white/10"
@@ -288,6 +444,8 @@ export default function MenuClient() {
                         dish={dish}
                         onOrder={handleOrder}
                         onRetry={undefined}
+                        isFavorite={favorites.includes(dish.id)}
+                        onToggleFavorite={handleToggleFavorite}
                       />
                     ))}
                   </div>
@@ -299,7 +457,14 @@ export default function MenuClient() {
 
         {!loading && !error && categories.length === 0 && (
           <div className="text-center text-foreground/50 py-12">
-            <p className="text-xl">No dishes available</p>
+            <p className="text-xl">
+              {showFavoritesOnly ? "No favorite dishes yet" : "No dishes available"}
+            </p>
+            {showFavoritesOnly && (
+              <p className="text-xs text-foreground/35 mt-2">
+                Tap the heart icon on any dish to add it to your favorites list.
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -390,39 +555,46 @@ export default function MenuClient() {
             <div className="flex-1 overflow-y-auto pr-1 space-y-4 mb-6">
               {cartItems.map((item) => (
                 <div
-                  key={item.id}
-                  className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 flex items-center gap-4 transition-all hover:border-white/10"
+                  key={item.uniqueKey}
+                  className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 flex flex-col gap-2 transition-all hover:border-white/10"
                 >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-sans font-medium text-sm text-foreground">{item.name}</h4>
-                    <p className="text-gold text-xs mt-0.5">{formatPrice(item.price)}</p>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-sans font-medium text-sm text-foreground">{item.name}</h4>
+                      <p className="text-gold text-xs mt-0.5">{formatPrice(item.price)}</p>
+                      {item.customizations && item.customizations.length > 0 && (
+                        <div className="text-[10px] text-foreground/45 font-mono mt-1">
+                          Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">
+                      <button
+                        onClick={() => updateQuantity(item.uniqueKey, item.quantity - 1)}
+                        className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-5 text-center text-foreground text-xs font-heading font-semibold">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.uniqueKey, item.quantity + 1)}
+                        className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
-                      aria-label="Decrease quantity"
+                      onClick={() => removeItem(item.uniqueKey)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-250 active:scale-90"
+                      aria-label="Remove item"
                     >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-5 text-center text-foreground text-xs font-heading font-semibold">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
-                      aria-label="Increase quantity"
-                    >
-                      <Plus className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-250 active:scale-90"
-                    aria-label="Remove item"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               ))}
             </div>
@@ -446,9 +618,83 @@ export default function MenuClient() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/80 flex items-center justify-between">
-                <span className="font-heading text-sm text-foreground">Total</span>
-                <span className="font-heading text-base text-gold">{formatPrice(total)}</span>
+              {/* Special Instructions */}
+              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 space-y-2">
+                <label className="text-[10px] font-heading tracking-widest text-foreground/50 block uppercase">
+                  Special Instructions
+                </label>
+                <textarea
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value)}
+                  placeholder="Type requests (e.g. no onion, extra cheese)... NOTE: custom written requests require counter approval."
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold/50 transition-colors placeholder:text-foreground/30 resize-none h-16 font-mono"
+                />
+              </div>
+
+              {/* Discount Code */}
+              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 space-y-2">
+                <label className="text-[10px] font-heading tracking-widest text-foreground/50 block uppercase">
+                  Discount Code
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountCodeInput}
+                    onChange={(e) => setDiscountCodeInput(e.target.value)}
+                    placeholder="ENTER CODE"
+                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-foreground uppercase focus:outline-none focus:border-gold/50 transition-colors font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountError("");
+                      if (!discountCodeInput.trim()) return;
+                      const code = discountCodeInput.trim().toUpperCase();
+                      const found = discountCodes.find(dc => dc.code === code);
+                      if (found) {
+                        setAppliedDiscount(found);
+                        toast.success(`Discount "${code}" applied!`);
+                      } else {
+                        setDiscountError("Invalid code");
+                        setAppliedDiscount(null);
+                      }
+                    }}
+                    className="px-3 py-2 rounded-xl bg-gold text-background text-xs font-bold font-heading hover:bg-gold/95"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {appliedDiscount && (
+                  <p className="text-[10px] text-green-400">
+                    ✓ Code "{appliedDiscount.code}" applied ({appliedDiscount.type === "percent" ? `${appliedDiscount.value}%` : `$${appliedDiscount.value}`} off)
+                  </p>
+                )}
+                {discountError && <p className="text-[10px] text-red-400">✕ {discountError}</p>}
+              </div>
+
+              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/80 space-y-2 text-xs text-foreground/60">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span className="text-foreground">{formatPrice(subtotal)}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-400">
+                    <span>Discount</span>
+                    <span>-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>Tax ({taxRate.toFixed(2)}%)</span>
+                  <span className="text-foreground">{formatPrice(taxAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Service Charge ({serviceCharge.toFixed(2)}%)</span>
+                  <span className="text-foreground">{formatPrice(serviceChargeAmount)}</span>
+                </div>
+                <div className="flex justify-between font-heading text-sm pt-2 border-t border-white/5 text-foreground">
+                  <span>Total Amount</span>
+                  <span className="text-gold font-bold">{formatPrice(grandTotal)}</span>
+                </div>
               </div>
 
               {orderError && (
@@ -481,6 +727,66 @@ export default function MenuClient() {
           </>
         )}
       </div>
+
+      {/* Customization Selection Modal */}
+      {customizingDish && (
+        <Modal
+          open={!!customizingDish}
+          onClose={() => setCustomizingDish(null)}
+          title={`Customize ${customizingDish.name}`}
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-foreground/50">Select optional add-ons for your dish:</p>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+              {(customizingDish.metadata?.customizations || []).map((addon: any, idx: number) => {
+                const isSelected = selectedCustoms.some((c) => c.name === addon.name);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedCustoms(prev => prev.filter(c => c.name !== addon.name));
+                      } else {
+                        setSelectedCustoms(prev => [...prev, { name: addon.name, price: Number(addon.price) }]);
+                      }
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl border text-xs transition-all cursor-pointer",
+                      isSelected
+                        ? "border-gold bg-gold/10 text-gold font-medium"
+                        : "border-white/10 hover:border-white/20 text-foreground/75"
+                    )}
+                  >
+                    <span>{addon.name}</span>
+                    <span className="text-gold font-semibold">+{formatPrice(addon.price)}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-white/5 pt-4">
+              <button
+                type="button"
+                onClick={() => setCustomizingDish(null)}
+                className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-foreground/60 text-xs font-semibold hover:bg-white/10 hover:text-foreground transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  addItem(customizingDish.id, selectedCustoms);
+                  toast.success(`Added ${customizingDish.name} to order`);
+                  setCustomizingDish(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-gold text-background font-heading text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Add to Order
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }

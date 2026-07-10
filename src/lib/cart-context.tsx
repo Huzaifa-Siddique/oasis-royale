@@ -5,13 +5,15 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, R
 export type CartItem = {
   id: string;
   quantity: number;
+  customizations?: Array<{ name: string; price: number }>;
+  uniqueKey: string;
 };
 
 type CartState = {
   items: CartItem[];
-  addItem: (id: string) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, qty: number) => void;
+  addItem: (id: string, customizations?: Array<{ name: string; price: number }>) => void;
+  removeItem: (uniqueKey: string) => void;
+  updateQuantity: (uniqueKey: string, qty: number) => void;
   clearCart: () => void;
   getCount: () => number;
 };
@@ -25,13 +27,13 @@ function loadCart(): CartItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item: unknown): item is CartItem =>
-        typeof item === "object" &&
-        item !== null &&
-        typeof (item as CartItem).id === "string" &&
-        typeof (item as CartItem).quantity === "number"
-    );
+    return parsed.map((item: any) => {
+      const id = item.id;
+      const quantity = Number(item.quantity) || 1;
+      const customizations = item.customizations || [];
+      const uniqueKey = item.uniqueKey || id;
+      return { id, quantity, customizations, uniqueKey };
+    });
   } catch {
     return [];
   }
@@ -76,29 +78,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const addItem = useCallback((id: string) => {
+  const addItem = useCallback((id: string, customizations?: Array<{ name: string; price: number }>) => {
+    const sortedCustoms = customizations ? [...customizations].sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const uniqueKey = id + (sortedCustoms.length > 0 ? "-" + JSON.stringify(sortedCustoms) : "");
+
     setItems((prev) => {
-      const existing = prev.find((item) => item.id === id);
+      const existing = prev.find((item) => item.uniqueKey === uniqueKey);
       if (existing) {
         return prev.map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+          item.uniqueKey === uniqueKey ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { id, quantity: 1 }];
+      return [...prev, { id, quantity: 1, customizations: sortedCustoms, uniqueKey }];
     });
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const removeItem = useCallback((uniqueKey: string) => {
+    setItems((prev) => prev.filter((item) => item.uniqueKey !== uniqueKey));
   }, []);
 
-  const updateQuantity = useCallback((id: string, qty: number) => {
+  const updateQuantity = useCallback((uniqueKey: string, qty: number) => {
     if (qty <= 0) {
-      setItems((prev) => prev.filter((item) => item.id !== id));
+      setItems((prev) => prev.filter((item) => item.uniqueKey !== uniqueKey));
       return;
     }
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: qty } : item))
+      prev.map((item) => (item.uniqueKey === uniqueKey ? { ...item, quantity: qty } : item))
     );
   }, []);
 

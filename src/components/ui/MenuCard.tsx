@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Dish } from "@/lib/supabase-types";
-import { ShoppingCart, AlertCircle } from "lucide-react";
+import { ShoppingCart, AlertCircle, Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { arSingleton, ARState } from "@/lib/ar-singleton";
 import { useCardVirtualization } from "@/hooks/useCardVirtualization";
@@ -16,6 +16,8 @@ type MenuCardProps = {
   onOrder?: (dish: Dish) => void;
   onRetry?: () => void;
   className?: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: (dishId: string) => void;
 };
 
 function MenuCard({
@@ -25,6 +27,8 @@ function MenuCard({
   onOrder,
   onRetry,
   className,
+  isFavorite = false,
+  onToggleFavorite,
 }: MenuCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -160,6 +164,28 @@ function MenuCard({
     >
       {/* 3D / Image Viewport Container */}
       <div className="aspect-[4/3] relative overflow-hidden bg-black/40">
+        {/* Favorite Button */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(dish.id);
+            }}
+            className="absolute top-3 left-3 z-45 p-2 rounded-full 
+                       bg-black/60 border border-white/10 text-foreground/70 
+                       backdrop-blur-md transition-all duration-200 
+                       hover:text-red-400 hover:bg-black/80 hover:border-red-400/30
+                       active:scale-90"
+            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Heart
+              className={cn(
+                "w-4 h-4 transition-transform duration-200 active:scale-125",
+                isFavorite ? "fill-red-500 text-red-500 scale-110" : ""
+              )}
+            />
+          </button>
+        )}
         {/* Shimmer/Overlay for Loading State */}
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 gap-3">
