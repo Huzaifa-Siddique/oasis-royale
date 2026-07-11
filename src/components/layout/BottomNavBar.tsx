@@ -22,7 +22,7 @@ export default function BottomNavBar() {
     role === "admin"
       ? [
           ...baseItems.slice(0, 3),
-          { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
           baseItems[3],
         ]
       : baseItems;

@@ -31,12 +31,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { headers: response.headers });
   }
 
-  // Admin route protection — require admin_token cookie for /admin/dashboard
-  if (pathname.startsWith("/admin/dashboard")) {
+  // Admin route protection — require admin_token cookie for /admin
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const adminToken = request.cookies.get("admin_token")?.value;
     if (!adminToken) {
       const url = request.nextUrl.clone();
-      url.pathname = "/admin";
+      url.pathname = "/profile";
       return NextResponse.redirect(url);
     }
   }

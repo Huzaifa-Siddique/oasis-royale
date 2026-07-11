@@ -162,7 +162,7 @@ export default function ProfilePage() {
       }
 
       setSubmitting(false);
-      if (role === "admin") router.push("/admin/dashboard");
+      if (role === "admin") router.push("/admin");
       else if (role === "staff") router.push("/kitchen");
       else router.refresh();
     } catch {
@@ -188,7 +188,7 @@ export default function ProfilePage() {
 
       if (newRole) {
         setSubmitting(false);
-        if (newRole === "admin") router.push("/admin/dashboard");
+        if (newRole === "admin") router.push("/admin");
         else if (newRole === "staff") router.push("/kitchen");
         else router.refresh();
         return;
