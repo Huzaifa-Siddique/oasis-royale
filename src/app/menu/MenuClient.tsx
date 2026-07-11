@@ -48,6 +48,9 @@ export default function MenuClient() {
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [discountError, setDiscountError] = useState("");
+  const [showPhone, setShowPhone] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showDiscount, setShowDiscount] = useState(false);
 
   useEffect(() => {
     fetch("/api/restaurant-status")
@@ -551,127 +554,187 @@ export default function MenuClient() {
           </div>
         ) : (
           <>
-            {/* Scrollable Items list */}
-            <div className="flex-1 overflow-y-auto pr-1 space-y-4 mb-6">
-              {cartItems.map((item) => (
-                <div
-                  key={item.uniqueKey}
-                  className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 flex flex-col gap-2 transition-all hover:border-white/10"
-                >
-                  <div className="flex items-center gap-4 w-full">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-sans font-medium text-sm text-foreground">{item.name}</h4>
-                      <p className="text-gold text-xs mt-0.5">{formatPrice(item.price)}</p>
-                      {item.customizations && item.customizations.length > 0 && (
-                        <div className="text-[10px] text-foreground/45 font-mono mt-1">
-                          Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
-                        </div>
+            {/* Scrollable Items list & Preferences */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-6 mb-4">
+              <div className="space-y-4">
+                {cartItems.map((item) => (
+                  <div
+                    key={item.uniqueKey}
+                    className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 flex flex-col gap-2 transition-all hover:border-white/10"
+                  >
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-sans font-medium text-sm text-foreground">{item.name}</h4>
+                        <p className="text-gold text-xs mt-0.5">{formatPrice(item.price)}</p>
+                        {item.customizations && item.customizations.length > 0 && (
+                          <div className="text-[10px] text-foreground/45 font-mono mt-1">
+                            Add-ons: {item.customizations.map((c: any) => `${c.name} (+${formatPrice(c.price)})`).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">
+                        <button
+                          onClick={() => updateQuantity(item.uniqueKey, item.quantity - 1)}
+                          className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-5 text-center text-foreground text-xs font-heading font-semibold">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.uniqueKey, item.quantity + 1)}
+                          className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => removeItem(item.uniqueKey)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-250 active:scale-90"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Preferences Section */}
+              <div className="pt-4 border-t border-white/5 space-y-3">
+                <h4 className="text-[10px] font-heading tracking-widest text-foreground/45 uppercase px-1 mb-1">
+                  Order Options (Optional)
+                </h4>
+
+                {/* WhatsApp Notification Collapsible */}
+                <div className="rounded-xl border border-white/5 bg-[#0b0b0b]/40 overflow-hidden transition-all duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setShowPhone(!showPhone)}
+                    className="w-full flex items-center justify-between p-3.5 text-left text-xs font-semibold text-foreground/80 hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-3.5 h-3.5 text-gold" />
+                      <span>WhatsApp Alerts</span>
+                      {phone.trim() && (
+                        <span className="text-[8px] text-green-400 bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded font-sans font-normal ml-1">
+                          Active
+                        </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full p-1">
-                      <button
-                        onClick={() => updateQuantity(item.uniqueKey, item.quantity - 1)}
-                        className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-5 text-center text-foreground text-xs font-heading font-semibold">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.uniqueKey, item.quantity + 1)}
-                        className="w-7 h-7 rounded-full bg-white/5 hover:bg-gold/15 hover:text-gold text-foreground/70 flex items-center justify-center transition-all duration-250 active:scale-90"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
+                    <span className="text-foreground/40 text-sm font-light leading-none">{showPhone ? "−" : "+"}</span>
+                  </button>
+                  {showPhone && (
+                    <div className="p-3.5 pt-0 border-t border-white/5 bg-black/20 space-y-2 animate-in fade-in duration-200">
+                      <input
+                        type="tel"
+                        placeholder="+1 (555) 000-0000"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold/50 transition-colors"
+                      />
+                      <p className="text-[9px] text-foreground/40 leading-relaxed px-1">
+                        We'll send you an automated WhatsApp message when your food is ready.
+                      </p>
                     </div>
-                    <button
-                      onClick={() => removeItem(item.uniqueKey)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-250 active:scale-90"
-                      aria-label="Remove item"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  )}
                 </div>
-              ))}
+
+                {/* Special Instructions Collapsible */}
+                <div className="rounded-xl border border-white/5 bg-[#0b0b0b]/40 overflow-hidden transition-all duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setShowInstructions(!showInstructions)}
+                    className="w-full flex items-center justify-between p-3.5 text-left text-xs font-semibold text-foreground/80 hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-gold" />
+                      <span>Special Instructions</span>
+                      {specialInstructions.trim() && (
+                        <span className="text-[8px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded font-sans font-normal ml-1">
+                          Added
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-foreground/40 text-sm font-light leading-none">{showInstructions ? "−" : "+"}</span>
+                  </button>
+                  {showInstructions && (
+                    <div className="p-3.5 pt-0 border-t border-white/5 bg-black/20 space-y-2 animate-in fade-in duration-200">
+                      <textarea
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        placeholder="Type requests (e.g. no onion, extra cheese)... NOTE: custom written requests require counter approval."
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold/50 transition-colors placeholder:text-foreground/30 resize-none h-16 font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Discount Code Collapsible */}
+                <div className="rounded-xl border border-white/5 bg-[#0b0b0b]/40 overflow-hidden transition-all duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscount(!showDiscount)}
+                    className="w-full flex items-center justify-between p-3.5 text-left text-xs font-semibold text-foreground/80 hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-gold" />
+                      <span>Discount Code</span>
+                      {appliedDiscount && (
+                        <span className="text-[8px] text-green-400 bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded font-sans font-normal ml-1">
+                          {appliedDiscount.code}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-foreground/40 text-sm font-light leading-none">{showDiscount ? "−" : "+"}</span>
+                  </button>
+                  {showDiscount && (
+                    <div className="p-3.5 pt-0 border-t border-white/5 bg-black/20 space-y-2 animate-in fade-in duration-200">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={discountCodeInput}
+                          onChange={(e) => setDiscountCodeInput(e.target.value)}
+                          placeholder="ENTER CODE"
+                          className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-foreground uppercase focus:outline-none focus:border-gold/50 transition-colors font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDiscountError("");
+                            if (!discountCodeInput.trim()) return;
+                            const code = discountCodeInput.trim().toUpperCase();
+                            const found = discountCodes.find(dc => dc.code === code);
+                            if (found) {
+                              setAppliedDiscount(found);
+                              toast.success(`Discount "${code}" applied!`);
+                            } else {
+                              setDiscountError("Invalid code");
+                              setAppliedDiscount(null);
+                            }
+                          }}
+                          className="px-3 py-2 rounded-xl bg-gold text-background text-xs font-bold font-heading hover:bg-gold/95 cursor-pointer"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {appliedDiscount && (
+                        <p className="text-[10px] text-green-400">
+                          ✓ Code "{appliedDiscount.code}" applied ({appliedDiscount.type === "percent" ? `${appliedDiscount.value}%` : `$${appliedDiscount.value}`} off)
+                        </p>
+                      )}
+                      {discountError && <p className="text-[10px] text-red-400">✕ {discountError}</p>}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Inputs & Checkout details */}
             <div className="space-y-4 border-t border-white/5 pt-4">
-              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60">
-                <label className="text-[10px] font-heading tracking-widest text-foreground/50 mb-2 block uppercase">
-                  <Smartphone className="w-3 h-3 inline mr-1 text-gold" />
-                  WhatsApp Number (Optional)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold/50 transition-colors"
-                />
-                <p className="text-[10px] text-foreground/45 mt-1.5 leading-relaxed">
-                  We'll send you an automated WhatsApp message when your food is ready.
-                </p>
-              </div>
-
-              {/* Special Instructions */}
-              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 space-y-2">
-                <label className="text-[10px] font-heading tracking-widest text-foreground/50 block uppercase">
-                  Special Instructions
-                </label>
-                <textarea
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value)}
-                  placeholder="Type requests (e.g. no onion, extra cheese)... NOTE: custom written requests require counter approval."
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold/50 transition-colors placeholder:text-foreground/30 resize-none h-16 font-mono"
-                />
-              </div>
-
-              {/* Discount Code */}
-              <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/60 space-y-2">
-                <label className="text-[10px] font-heading tracking-widest text-foreground/50 block uppercase">
-                  Discount Code
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={discountCodeInput}
-                    onChange={(e) => setDiscountCodeInput(e.target.value)}
-                    placeholder="ENTER CODE"
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-foreground uppercase focus:outline-none focus:border-gold/50 transition-colors font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDiscountError("");
-                      if (!discountCodeInput.trim()) return;
-                      const code = discountCodeInput.trim().toUpperCase();
-                      const found = discountCodes.find(dc => dc.code === code);
-                      if (found) {
-                        setAppliedDiscount(found);
-                        toast.success(`Discount "${code}" applied!`);
-                      } else {
-                        setDiscountError("Invalid code");
-                        setAppliedDiscount(null);
-                      }
-                    }}
-                    className="px-3 py-2 rounded-xl bg-gold text-background text-xs font-bold font-heading hover:bg-gold/95"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {appliedDiscount && (
-                  <p className="text-[10px] text-green-400">
-                    ✓ Code "{appliedDiscount.code}" applied ({appliedDiscount.type === "percent" ? `${appliedDiscount.value}%` : `$${appliedDiscount.value}`} off)
-                  </p>
-                )}
-                {discountError && <p className="text-[10px] text-red-400">✕ {discountError}</p>}
-              </div>
-
               <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/80 space-y-2 text-xs text-foreground/60">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
