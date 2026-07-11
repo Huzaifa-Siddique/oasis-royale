@@ -221,7 +221,7 @@ export default function MenuClient() {
 
   const handleOrder = useCallback(
     (dish: Dish) => {
-      const addons = dish.metadata?.customizations || [];
+      const addons = (dish.metadata as any)?.customizations || [];
       if (addons.length > 0) {
         setCustomizingDish(dish);
         setSelectedCustoms([]);
@@ -291,7 +291,7 @@ export default function MenuClient() {
     try {
       const orderItems = items.map((item) => {
         const dish = dishMap.get(item.id);
-        const dbCustomizations = dish?.metadata?.customizations || [];
+        const dbCustomizations = (dish?.metadata as any)?.customizations || [];
         const validatedCustoms = (item.customizations || []).map((c: any) => {
           const dbCustom = dbCustomizations.find((dc: any) => dc.name === c.name);
           return {
@@ -738,7 +738,7 @@ export default function MenuClient() {
           <div className="space-y-4">
             <p className="text-xs text-foreground/50">Select optional add-ons for your dish:</p>
             <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
-              {(customizingDish.metadata?.customizations || []).map((addon: any, idx: number) => {
+              {((customizingDish.metadata as any)?.customizations || []).map((addon: any, idx: number) => {
                 const isSelected = selectedCustoms.some((c) => c.name === addon.name);
                 return (
                   <button

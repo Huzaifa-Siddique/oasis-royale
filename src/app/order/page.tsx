@@ -26,6 +26,12 @@ type OrderData = {
     cancelled_by: string;
     cancelled_at: string;
   };
+  special_instructions?: string | null;
+  customization_status?: string | null;
+  customization_charge?: number | null;
+  customization_notes?: string | null;
+  discount_code?: string | null;
+  discount_amount?: number | null;
 };
 
 export default function OrderPage() {
@@ -333,7 +339,7 @@ export default function OrderPage() {
 
       const orderItems = items.map((item) => {
         const dish = freshMap.get(item.id);
-        const dbCustomizations = dish?.metadata?.customizations || [];
+        const dbCustomizations = (dish?.metadata as any)?.customizations || [];
         const validatedCustoms = (item.customizations || []).map((c: any) => {
           const dbCustom = dbCustomizations.find((dc: any) => dc.name === c.name);
           return {
@@ -431,16 +437,16 @@ export default function OrderPage() {
             )}
 
             <div className="space-y-1.5 pt-2 text-xs text-foreground/50">
-              {orderData?.discount_amount > 0 && (
+              {(orderData?.discount_amount || 0) > 0 && (
                 <div className="flex justify-between text-green-400">
                   <span>Discount</span>
-                  <span>-{formatPrice(orderData.discount_amount)}</span>
+                  <span>-{formatPrice(orderData?.discount_amount || 0)}</span>
                 </div>
               )}
-              {orderData?.customization_charge > 0 && (
+              {(orderData?.customization_charge || 0) > 0 && (
                 <div className="flex justify-between text-gold">
                   <span>Custom Request Fee</span>
-                  <span>+{formatPrice(orderData.customization_charge)}</span>
+                  <span>+{formatPrice(orderData?.customization_charge || 0)}</span>
                 </div>
               )}
               <div className="flex justify-between">
